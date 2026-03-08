@@ -44,7 +44,7 @@ impl Command {
     fn execute(self, tasks: &mut list::TaskList) {
         match self {
             Command::Add(task) => tasks.add(task),
-            Command::List => println!("List"),
+            Command::List => tasks.list(),
             Command::Delete(id) => println!("Delete"),
             Command::Update(id, task) => println!("Update"),
             Command::Complete(id) => println!("Complete"),

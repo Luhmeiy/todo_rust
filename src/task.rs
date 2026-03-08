@@ -10,4 +10,9 @@ impl Task {
             completed: false,
         }
     }
+
+    pub fn display(&self) {
+        let check = if self.completed { "x" } else { " " };
+        println!("- [{check}] {}", self.description);
+    }
 }
