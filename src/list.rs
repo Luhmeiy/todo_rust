@@ -1,5 +1,16 @@
 use crate::task::Task;
 
+#[derive(PartialEq)]
+pub enum TaskId {
+    Number(usize),
+    String(String),
+}
+
+pub enum LookupError {
+    NotFound,
+    MultipleMatches(Vec<usize>),
+}
+
 pub struct TaskList {
     title: String,
     tasks: Vec<Task>,
@@ -32,31 +43,72 @@ impl TaskList {
         }
     }
 
-    fn validate_index<T: FnOnce(&mut Task)>(&mut self, id: usize, f: T) {
-        match self.tasks.get_mut(id) {
-            Some(task) => f(task),
-            None => println!("Invalid ID."),
+    fn handle_errors(&self, error: LookupError) {
+        match error {
+            LookupError::NotFound => println!("Task not found."),
+            LookupError::MultipleMatches(indices) => {
+                println!("Multiple matches. Please use the task number.");
+                println!("Matches:");
+
+                for id in indices {
+                    println!("  {}. {}", id + 1, self.tasks[id].get_description());
+                }
+            }
+        }
+    }
+
+    fn resolve_index(&self, query: TaskId) -> Result<usize, LookupError> {
+        match query {
+            TaskId::Number(id) => {
+                if id < self.tasks.len() {
+                    Ok(id)
+                } else {
+                    Err(LookupError::NotFound)
+                }
+            }
+            TaskId::String(description) => {
+                let matches: Vec<usize> = self
+                    .tasks
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, t)| t.get_description() == &description)
+                    .map(|(i, _)| i)
+                    .collect();
+
+                match matches.len() {
+                    0 => Err(LookupError::NotFound),
+                    1 => Ok(matches[0]),
+                    _ => Err(LookupError::MultipleMatches(matches)),
+                }
+            }
+        }
+    }
+
+    fn validate_index<T: FnOnce(&mut Task)>(&mut self, query: TaskId, f: T) {
+        match self.resolve_index(query) {
+            Ok(id) => f(&mut self.tasks[id]),
+            Err(error) => self.handle_errors(error),
         };
     }
 
-    pub fn update(&mut self, id: usize, description: String) {
-        self.validate_index(id, |t| t.update(description));
+    pub fn update(&mut self, query: TaskId, description: String) {
+        self.validate_index(query, |t| t.update(description));
     }
 
-    pub fn check(&mut self, id: usize) {
-        self.validate_index(id, |t| t.check());
+    pub fn check(&mut self, query: TaskId) {
+        self.validate_index(query, |t| t.check());
     }
 
-    pub fn uncheck(&mut self, id: usize) {
-        self.validate_index(id, |t| t.uncheck());
+    pub fn uncheck(&mut self, query: TaskId) {
+        self.validate_index(query, |t| t.uncheck());
     }
 
-    pub fn delete(&mut self, id: usize) {
-        if id >= self.tasks.len() {
-            println!("Invalid ID.");
-            return;
+    pub fn delete(&mut self, query: TaskId) {
+        match self.resolve_index(query) {
+            Ok(id) => {
+                self.tasks.remove(id);
+            }
+            Err(error) => self.handle_errors(error),
         }
-
-        self.tasks.remove(id);
     }
 }

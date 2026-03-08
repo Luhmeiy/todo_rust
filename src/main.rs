@@ -6,10 +6,10 @@ mod task;
 enum Command {
     Add(String),
     List,
-    Update(usize, String),
-    Check(usize),
-    Uncheck(usize),
-    Delete(usize),
+    Update(list::TaskId, String),
+    Check(list::TaskId),
+    Uncheck(list::TaskId),
+    Delete(list::TaskId),
 }
 
 impl Command {
@@ -22,24 +22,24 @@ impl Command {
                 Ok(Command::Add(task))
             }
             ["list"] => Ok(Command::List),
-            ["update", id_str, rest @ ..] if !rest.is_empty() => match id_str.parse::<usize>() {
+            ["update", query, rest @ ..] if !rest.is_empty() => match query.parse::<usize>() {
                 Ok(id) => {
                     let task = rest.join(" ");
-                    Ok(Command::Update(id - 1, task))
+                    Ok(Command::Update(list::TaskId::Number(id - 1), task))
                 }
                 Err(_) => Err("Invalid ID".to_string()),
             },
-            ["check", id_str] => match id_str.parse::<usize>() {
-                Ok(id) => Ok(Command::Check(id - 1)),
-                Err(_) => Err("Invalid ID".to_string()),
+            ["check", query @ ..] => match query[0].parse::<usize>() {
+                Ok(id) => Ok(Command::Check(list::TaskId::Number(id - 1))),
+                Err(_) => Ok(Command::Check(list::TaskId::String(query.join(" ")))),
             },
-            ["uncheck", id_str] => match id_str.parse::<usize>() {
-                Ok(id) => Ok(Command::Uncheck(id - 1)),
-                Err(_) => Err("Invalid ID".to_string()),
+            ["uncheck", query @ ..] => match query[0].parse::<usize>() {
+                Ok(id) => Ok(Command::Uncheck(list::TaskId::Number(id - 1))),
+                Err(_) => Ok(Command::Uncheck(list::TaskId::String(query.join(" ")))),
             },
-            ["delete", id_str] => match id_str.parse::<usize>() {
-                Ok(id) => Ok(Command::Delete(id - 1)),
-                Err(_) => Err("Invalid ID".to_string()),
+            ["delete", query @ ..] => match query[0].parse::<usize>() {
+                Ok(id) => Ok(Command::Delete(list::TaskId::Number(id - 1))),
+                Err(_) => Ok(Command::Delete(list::TaskId::String(query.join(" ")))),
             },
             [command, ..] => Err(format!("Invalid command: {command}")),
             [] => Err("Empty input".to_string()),

@@ -11,6 +11,10 @@ impl Task {
         }
     }
 
+    pub fn get_description(&self) -> &String {
+        &self.description
+    }
+
     pub fn display(&self) {
         let check = if self.checked { "x" } else { " " };
         println!("- [{check}] {}", self.description);
