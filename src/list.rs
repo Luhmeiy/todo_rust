@@ -32,19 +32,31 @@ impl TaskList {
         }
     }
 
+    fn validate_index<T: FnOnce(&mut Task)>(&mut self, id: usize, f: T) {
+        match self.tasks.get_mut(id) {
+            Some(task) => f(task),
+            None => println!("Invalid ID."),
+        };
+    }
+
     pub fn update(&mut self, id: usize, description: String) {
-        self.tasks[id].update(description)
+        self.validate_index(id, |t| t.update(description));
     }
 
     pub fn check(&mut self, id: usize) {
-        self.tasks[id].check()
+        self.validate_index(id, |t| t.check());
     }
 
     pub fn uncheck(&mut self, id: usize) {
-        self.tasks[id].uncheck()
+        self.validate_index(id, |t| t.uncheck());
     }
 
     pub fn delete(&mut self, id: usize) {
+        if id >= self.tasks.len() {
+            println!("Invalid ID.");
+            return;
+        }
+
         self.tasks.remove(id);
     }
 }
