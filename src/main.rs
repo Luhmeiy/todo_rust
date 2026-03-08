@@ -1,9 +1,7 @@
 use std::io;
 
-struct Task {
-    description: String,
-    completed: bool,
-}
+mod list;
+mod task;
 
 enum Command {
     Add(String),
@@ -43,9 +41,9 @@ impl Command {
         }
     }
 
-    fn execute(self, tasks: &mut Vec<Task>) {
+    fn execute(self, tasks: &mut list::TaskList) {
         match self {
-            Command::Add(task) => println!("Add"),
+            Command::Add(task) => tasks.add(task),
             Command::List => println!("List"),
             Command::Delete(id) => println!("Delete"),
             Command::Update(id, task) => println!("Update"),
@@ -55,10 +53,10 @@ impl Command {
 }
 
 fn main() {
-    let mut tasks: Vec<Task> = Vec::new();
+    let mut task_list = list::TaskList::new("Todo list".to_string());
 
     loop {
-        println!("Todo list");
+        println!("{}", task_list.get_title());
 
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_err() {
@@ -67,7 +65,7 @@ fn main() {
         };
 
         match Command::parse_command(&input) {
-            Ok(command) => command.execute(&mut tasks),
+            Ok(command) => command.execute(&mut task_list),
             Err(error) => eprintln!("Error: {error}"),
         }
     }
