@@ -31,4 +31,16 @@ impl TaskList {
             task.display();
         }
     }
+
+    pub fn update(&mut self, id: usize, description: String) {
+        self.tasks[id].update(description)
+    }
+
+    pub fn check(&mut self, id: usize) {
+        self.tasks[id].check()
+    }
+
+    pub fn uncheck(&mut self, id: usize) {
+        self.tasks[id].uncheck()
+    }
 }

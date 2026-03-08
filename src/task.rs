@@ -1,18 +1,30 @@
 pub struct Task {
     description: String,
-    completed: bool,
+    checked: bool,
 }
 
 impl Task {
     pub fn new(description: String) -> Self {
         Self {
             description,
-            completed: false,
+            checked: false,
         }
     }
 
     pub fn display(&self) {
-        let check = if self.completed { "x" } else { " " };
+        let check = if self.checked { "x" } else { " " };
         println!("- [{check}] {}", self.description);
+    }
+
+    pub fn update(&mut self, description: String) {
+        self.description = description
+    }
+
+    pub fn check(&mut self) {
+        self.checked = true
+    }
+
+    pub fn uncheck(&mut self) {
+        self.checked = false
     }
 }

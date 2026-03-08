@@ -7,7 +7,8 @@ enum Command {
     Add(String),
     List,
     Update(usize, String),
-    Complete(usize),
+    Check(usize),
+    Uncheck(usize),
     Delete(usize),
 }
 
@@ -21,19 +22,23 @@ impl Command {
                 Ok(Command::Add(task))
             }
             ["list"] => Ok(Command::List),
-            ["update", id_str, rest @ ..] if !rest.is_empty() => match id_str.parse() {
+            ["update", id_str, rest @ ..] if !rest.is_empty() => match id_str.parse::<usize>() {
                 Ok(id) => {
                     let task = rest.join(" ");
-                    Ok(Command::Update(id, task))
+                    Ok(Command::Update(id - 1, task))
                 }
                 Err(_) => Err("Invalid ID".to_string()),
             },
-            ["complete", id_str] => match id_str.parse() {
-                Ok(id) => Ok(Command::Complete(id)),
+            ["check", id_str] => match id_str.parse::<usize>() {
+                Ok(id) => Ok(Command::Check(id - 1)),
                 Err(_) => Err("Invalid ID".to_string()),
             },
-            ["delete", id_str] => match id_str.parse() {
-                Ok(id) => Ok(Command::Delete(id)),
+            ["uncheck", id_str] => match id_str.parse::<usize>() {
+                Ok(id) => Ok(Command::Uncheck(id - 1)),
+                Err(_) => Err("Invalid ID".to_string()),
+            },
+            ["delete", id_str] => match id_str.parse::<usize>() {
+                Ok(id) => Ok(Command::Delete(id - 1)),
                 Err(_) => Err("Invalid ID".to_string()),
             },
             [command, ..] => Err(format!("Invalid command: {command}")),
@@ -45,9 +50,10 @@ impl Command {
         match self {
             Command::Add(task) => tasks.add(task),
             Command::List => tasks.list(),
+            Command::Update(id, task) => tasks.update(id, task),
+            Command::Check(id) => tasks.check(id),
+            Command::Uncheck(id) => tasks.uncheck(id),
             Command::Delete(id) => println!("Delete"),
-            Command::Update(id, task) => println!("Update"),
-            Command::Complete(id) => println!("Complete"),
         }
     }
 }
