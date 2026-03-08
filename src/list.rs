@@ -7,6 +7,7 @@ pub enum TaskId {
 }
 
 pub enum LookupError {
+    Empty,
     NotFound,
     MultipleMatches(Vec<usize>),
 }
@@ -34,7 +35,7 @@ impl TaskList {
 
     pub fn list(&self) {
         if self.tasks.is_empty() {
-            println!("No tasks found.");
+            self.handle_errors(LookupError::Empty);
             return;
         }
 
@@ -45,6 +46,7 @@ impl TaskList {
 
     fn handle_errors(&self, error: LookupError) {
         match error {
+            LookupError::Empty => println!("No tasks found."),
             LookupError::NotFound => println!("Task not found."),
             LookupError::MultipleMatches(indices) => {
                 println!("Multiple matches. Please use the task number.");
@@ -95,12 +97,39 @@ impl TaskList {
         self.validate_index(query, |t| t.update(description));
     }
 
+    fn is_not_empty<F: FnMut(&mut Task)>(&mut self, mut f: F) {
+        if self.tasks.is_empty() {
+            self.handle_errors(LookupError::Empty);
+        } else {
+            for task in self.tasks.iter_mut() {
+                f(task)
+            }
+        }
+    }
+
+    pub fn check_all(&mut self) {
+        self.is_not_empty(|task| task.check())
+    }
+
     pub fn check(&mut self, query: TaskId) {
         self.validate_index(query, |t| t.check());
     }
 
+    pub fn uncheck_all(&mut self) {
+        self.is_not_empty(|task| task.uncheck())
+    }
+
     pub fn uncheck(&mut self, query: TaskId) {
         self.validate_index(query, |t| t.uncheck());
+    }
+
+    pub fn delete_all(&mut self) {
+        if self.tasks.is_empty() {
+            self.handle_errors(LookupError::Empty);
+            return;
+        }
+
+        self.tasks.clear()
     }
 
     pub fn delete(&mut self, query: TaskId) {

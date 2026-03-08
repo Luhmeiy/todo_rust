@@ -7,8 +7,11 @@ enum Command {
     Add(String),
     List,
     Update(list::TaskId, String),
+    CheckAll,
     Check(list::TaskId),
+    UncheckAll,
     Uncheck(list::TaskId),
+    DeleteAll,
     Delete(list::TaskId),
 }
 
@@ -29,14 +32,17 @@ impl Command {
                 }
                 Err(_) => Err("Invalid ID".to_string()),
             },
+            ["check", "--all"] => Ok(Command::CheckAll),
             ["check", query @ ..] => match query[0].parse::<usize>() {
                 Ok(id) => Ok(Command::Check(list::TaskId::Number(id - 1))),
                 Err(_) => Ok(Command::Check(list::TaskId::String(query.join(" ")))),
             },
+            ["uncheck", "--all"] => Ok(Command::UncheckAll),
             ["uncheck", query @ ..] => match query[0].parse::<usize>() {
                 Ok(id) => Ok(Command::Uncheck(list::TaskId::Number(id - 1))),
                 Err(_) => Ok(Command::Uncheck(list::TaskId::String(query.join(" ")))),
             },
+            ["delete", "--all"] => Ok(Command::DeleteAll),
             ["delete", query @ ..] => match query[0].parse::<usize>() {
                 Ok(id) => Ok(Command::Delete(list::TaskId::Number(id - 1))),
                 Err(_) => Ok(Command::Delete(list::TaskId::String(query.join(" ")))),
@@ -51,8 +57,11 @@ impl Command {
             Command::Add(task) => tasks.add(task),
             Command::List => tasks.list(),
             Command::Update(id, task) => tasks.update(id, task),
+            Command::CheckAll => tasks.check_all(),
             Command::Check(id) => tasks.check(id),
+            Command::UncheckAll => tasks.uncheck_all(),
             Command::Uncheck(id) => tasks.uncheck(id),
+            Command::DeleteAll => tasks.delete_all(),
             Command::Delete(id) => tasks.delete(id),
         }
     }
