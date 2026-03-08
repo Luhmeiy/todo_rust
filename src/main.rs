@@ -53,7 +53,7 @@ impl Command {
             Command::Update(id, task) => tasks.update(id, task),
             Command::Check(id) => tasks.check(id),
             Command::Uncheck(id) => tasks.uncheck(id),
-            Command::Delete(id) => println!("Delete"),
+            Command::Delete(id) => tasks.delete(id),
         }
     }
 }

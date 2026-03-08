@@ -43,4 +43,8 @@ impl TaskList {
     pub fn uncheck(&mut self, id: usize) {
         self.tasks[id].uncheck()
     }
+
+    pub fn delete(&mut self, id: usize) {
+        self.tasks.remove(id);
+    }
 }
