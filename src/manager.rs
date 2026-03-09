@@ -1,5 +1,11 @@
 use crate::list::TaskList;
 
+#[derive(PartialEq)]
+pub enum ListId {
+    Number(usize),
+    String(String),
+}
+
 pub enum ManagerError {
     Empty,
     NotFound,
@@ -9,7 +15,10 @@ pub enum ManagerError {
 impl std::fmt::Display for ManagerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ManagerError::Empty => write!(f, "No lists found."),
+            ManagerError::Empty => write!(
+                f,
+                "No lists found. Create a new list with \"mklist name of your list\""
+            ),
             ManagerError::NotFound => write!(f, "List not found."),
             ManagerError::MultipleMatches(indices) => {
                 writeln!(f, "Multiple matches. Please use the list number.")?;
@@ -37,8 +46,12 @@ impl ListManager {
         }
     }
 
-    pub fn get_current_list(&mut self) -> &mut TaskList {
-        &mut self.lists[self.current_list]
+    pub fn get_current_list(&mut self) -> Result<&mut TaskList, ManagerError> {
+        if self.lists.is_empty() {
+            return Err(ManagerError::Empty);
+        }
+
+        Ok(&mut self.lists[self.current_list])
     }
 
     pub fn add(&mut self, title: String) -> Result<(), ManagerError> {
@@ -55,6 +68,36 @@ impl ListManager {
             println!("{}", list.get_title())
         }
 
+        Ok(())
+    }
+
+    pub fn delete(&mut self, query: ListId) -> Result<(), ManagerError> {
+        let id = match query {
+            ListId::Number(id) => {
+                if id < self.lists.len() {
+                    Ok(id)
+                } else {
+                    Err(ManagerError::NotFound)
+                }
+            }
+            ListId::String(title) => {
+                let matches: Vec<(usize, String)> = self
+                    .lists
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, t)| t.get_title() == &title)
+                    .map(|(i, t)| (i, t.get_title().to_string()))
+                    .collect();
+
+                match matches.len() {
+                    0 => Err(ManagerError::NotFound),
+                    1 => Ok(matches[0].0),
+                    _ => Err(ManagerError::MultipleMatches(matches)),
+                }
+            }
+        }?;
+
+        self.lists.remove(id);
         Ok(())
     }
 }
