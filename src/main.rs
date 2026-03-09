@@ -53,7 +53,7 @@ impl Command {
     }
 
     fn execute(self, tasks: &mut list::TaskList) {
-        match self {
+        let result = match self {
             Command::Add(task) => tasks.add(task),
             Command::List => tasks.list(),
             Command::Update(id, task) => tasks.update(id, task),
@@ -63,6 +63,10 @@ impl Command {
             Command::Uncheck(id) => tasks.uncheck(id),
             Command::DeleteAll => tasks.delete_all(),
             Command::Delete(id) => tasks.delete(id),
+        };
+
+        if let Err(error) = result {
+            eprintln!("{error}");
         }
     }
 }
