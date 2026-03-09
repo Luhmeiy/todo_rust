@@ -2,6 +2,7 @@ use crate::{error::AppError, list::TaskId, manager::ListManager};
 
 pub enum Command {
     MakeList(String),
+    Lists,
     Add(String),
     List,
     Update(TaskId, String),
@@ -23,6 +24,8 @@ impl Command {
                 let list = rest.join(" ");
                 Ok(Command::MakeList(list))
             }
+            ["lists"] => Ok(Command::Lists),
+            ["lists", _rest @ ..] => Err("lists takes no parameters.".to_string()),
             ["add"] => Err("add requires a task description.".to_string()),
             ["add", rest @ ..] => {
                 let task = rest.join(" ");
@@ -73,6 +76,7 @@ impl Command {
     pub fn execute(self, list_manager: &mut ListManager) -> Result<(), AppError> {
         match self {
             Command::MakeList(list) => list_manager.add(list)?,
+            Command::Lists => list_manager.list()?,
             Command::Add(task) => {
                 let tasks = list_manager.get_current_list();
                 tasks.add(task)?

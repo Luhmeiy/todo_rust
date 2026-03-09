@@ -45,4 +45,16 @@ impl ListManager {
         self.lists.push(TaskList::new(title));
         Ok(())
     }
+
+    pub fn list(&self) -> Result<(), ManagerError> {
+        if self.lists.is_empty() {
+            return Err(ManagerError::Empty);
+        }
+
+        for list in self.lists.iter() {
+            println!("{}", list.get_title())
+        }
+
+        Ok(())
+    }
 }
