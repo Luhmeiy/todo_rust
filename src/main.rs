@@ -1,6 +1,7 @@
 use std::io;
 
 mod command;
+mod error;
 mod list;
 mod manager;
 mod task;

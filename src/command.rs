@@ -1,7 +1,4 @@
-use crate::{
-    list::{LookupError, TaskId},
-    manager::ListManager,
-};
+use crate::{error::AppError, list::TaskId, manager::ListManager};
 
 pub enum Command {
     MakeList(String),
@@ -73,45 +70,46 @@ impl Command {
         }
     }
 
-    pub fn execute(self, list_manager: &mut ListManager) -> Result<(), LookupError> {
+    pub fn execute(self, list_manager: &mut ListManager) -> Result<(), AppError> {
         match self {
-            Command::MakeList(list) => list_manager.add(list),
+            Command::MakeList(list) => list_manager.add(list)?,
             Command::Add(task) => {
                 let tasks = list_manager.get_current_list();
-                tasks.add(task)
+                tasks.add(task)?
             }
             Command::List => {
                 let tasks = list_manager.get_current_list();
-                tasks.list()
+                tasks.list()?
             }
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list();
-                tasks.update(id, task)
+                tasks.update(id, task)?
             }
             Command::CheckAll => {
                 let tasks = list_manager.get_current_list();
-                tasks.check_all()
+                tasks.check_all()?
             }
             Command::Check(id) => {
                 let tasks = list_manager.get_current_list();
-                tasks.check(id)
+                tasks.check(id)?
             }
             Command::UncheckAll => {
                 let tasks = list_manager.get_current_list();
-                tasks.uncheck_all()
+                tasks.uncheck_all()?
             }
             Command::Uncheck(id) => {
                 let tasks = list_manager.get_current_list();
-                tasks.uncheck(id)
+                tasks.uncheck(id)?
             }
             Command::DeleteAll => {
                 let tasks = list_manager.get_current_list();
-                tasks.delete_all()
+                tasks.delete_all()?
             }
             Command::Delete(id) => {
                 let tasks = list_manager.get_current_list();
-                tasks.delete(id)
+                tasks.delete(id)?
             }
         }
+        Ok(())
     }
 }
