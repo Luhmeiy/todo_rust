@@ -1,6 +1,10 @@
-use crate::list::{LookupError, TaskId, TaskList};
+use crate::{
+    list::{LookupError, TaskId},
+    manager::ListManager,
+};
 
 pub enum Command {
+    MakeList(String),
     Add(String),
     List,
     Update(TaskId, String),
@@ -17,6 +21,11 @@ impl Command {
         let split_command: Vec<&str> = command.split_whitespace().collect();
 
         match split_command.as_slice() {
+            ["mklist"] => Err("mklist requires a list title.".to_string()),
+            ["mklist", rest @ ..] => {
+                let list = rest.join(" ");
+                Ok(Command::MakeList(list))
+            }
             ["add"] => Err("add requires a task description.".to_string()),
             ["add", rest @ ..] => {
                 let task = rest.join(" ");
@@ -64,17 +73,45 @@ impl Command {
         }
     }
 
-    pub fn execute(self, tasks: &mut TaskList) -> Result<(), LookupError> {
+    pub fn execute(self, list_manager: &mut ListManager) -> Result<(), LookupError> {
         match self {
-            Command::Add(task) => tasks.add(task),
-            Command::List => tasks.list(),
-            Command::Update(id, task) => tasks.update(id, task),
-            Command::CheckAll => tasks.check_all(),
-            Command::Check(id) => tasks.check(id),
-            Command::UncheckAll => tasks.uncheck_all(),
-            Command::Uncheck(id) => tasks.uncheck(id),
-            Command::DeleteAll => tasks.delete_all(),
-            Command::Delete(id) => tasks.delete(id),
+            Command::MakeList(list) => list_manager.add(list),
+            Command::Add(task) => {
+                let tasks = list_manager.get_current_list();
+                tasks.add(task)
+            }
+            Command::List => {
+                let tasks = list_manager.get_current_list();
+                tasks.list()
+            }
+            Command::Update(id, task) => {
+                let tasks = list_manager.get_current_list();
+                tasks.update(id, task)
+            }
+            Command::CheckAll => {
+                let tasks = list_manager.get_current_list();
+                tasks.check_all()
+            }
+            Command::Check(id) => {
+                let tasks = list_manager.get_current_list();
+                tasks.check(id)
+            }
+            Command::UncheckAll => {
+                let tasks = list_manager.get_current_list();
+                tasks.uncheck_all()
+            }
+            Command::Uncheck(id) => {
+                let tasks = list_manager.get_current_list();
+                tasks.uncheck(id)
+            }
+            Command::DeleteAll => {
+                let tasks = list_manager.get_current_list();
+                tasks.delete_all()
+            }
+            Command::Delete(id) => {
+                let tasks = list_manager.get_current_list();
+                tasks.delete(id)
+            }
         }
     }
 }

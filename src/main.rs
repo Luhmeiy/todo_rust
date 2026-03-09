@@ -2,13 +2,16 @@ use std::io;
 
 mod command;
 mod list;
+mod manager;
 mod task;
 
 fn main() {
-    let mut task_list = list::TaskList::new("Todo list".to_string());
+    let mut list_manager = manager::ListManager::new();
+    let _ = list_manager.add("Todo list".to_string());
+    let current_list_title = list_manager.get_current_list().get_title().to_string();
 
     loop {
-        println!("{}", task_list.get_title());
+        println!("{current_list_title}");
 
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_err() {
@@ -18,7 +21,7 @@ fn main() {
 
         match command::Command::parse_command(&input) {
             Ok(command) => {
-                if let Err(error) = command.execute(&mut task_list) {
+                if let Err(error) = command.execute(&mut list_manager) {
                     eprintln!("Error: {error}");
                 }
             }
