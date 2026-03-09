@@ -20,31 +20,46 @@ impl Command {
         let split_command: Vec<&str> = command.split_whitespace().collect();
 
         match split_command.as_slice() {
-            ["add", rest @ ..] if !rest.is_empty() => {
+            ["add"] => Err("add requires a task description.".to_string()),
+            ["add", rest @ ..] => {
                 let task = rest.join(" ");
                 Ok(Command::Add(task))
             }
             ["list"] => Ok(Command::List),
-            ["update", query, rest @ ..] if !rest.is_empty() => match query.parse::<usize>() {
-                Ok(id) => {
+            ["list", _rest @ ..] => Err("list takes no parameters.".to_string()),
+            ["update"] => Err("update requires an ID and a new task description.".to_string()),
+            ["update", query] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Err("update also requires a new task description.".to_string()),
+                Ok(_) => Err("ID must be a positive integer".to_string()),
+                Err(_) => Err("Invalid ID".to_string()),
+            },
+            ["update", query, rest @ ..] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => {
                     let task = rest.join(" ");
                     Ok(Command::Update(list::TaskId::Number(id - 1), task))
                 }
+                Ok(_) => Err("ID must be a positive integer".to_string()),
                 Err(_) => Err("Invalid ID".to_string()),
             },
-            ["check", "--all"] => Ok(Command::CheckAll),
+            ["check"] => Err("check requires an ID or task description.".to_string()),
+            ["check", "--all", _rest @ ..] => Ok(Command::CheckAll),
             ["check", query @ ..] => match query[0].parse::<usize>() {
-                Ok(id) => Ok(Command::Check(list::TaskId::Number(id - 1))),
+                Ok(id) if id > 0 => Ok(Command::Check(list::TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer".to_string()),
                 Err(_) => Ok(Command::Check(list::TaskId::String(query.join(" ")))),
             },
-            ["uncheck", "--all"] => Ok(Command::UncheckAll),
+            ["uncheck"] => Err("uncheck requires an ID or task description.".to_string()),
+            ["uncheck", "--all", _rest @ ..] => Ok(Command::UncheckAll),
             ["uncheck", query @ ..] => match query[0].parse::<usize>() {
-                Ok(id) => Ok(Command::Uncheck(list::TaskId::Number(id - 1))),
+                Ok(id) if id > 0 => Ok(Command::Uncheck(list::TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer".to_string()),
                 Err(_) => Ok(Command::Uncheck(list::TaskId::String(query.join(" ")))),
             },
-            ["delete", "--all"] => Ok(Command::DeleteAll),
+            ["delete"] => Err("delete requires an ID or task description.".to_string()),
+            ["delete", "--all", _rest @ ..] => Ok(Command::DeleteAll),
             ["delete", query @ ..] => match query[0].parse::<usize>() {
-                Ok(id) => Ok(Command::Delete(list::TaskId::Number(id - 1))),
+                Ok(id) if id > 0 => Ok(Command::Delete(list::TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer".to_string()),
                 Err(_) => Ok(Command::Delete(list::TaskId::String(query.join(" ")))),
             },
             [command, ..] => Err(format!("Invalid command: {command}")),
