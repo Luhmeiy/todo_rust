@@ -47,6 +47,11 @@ impl TaskList {
         &self.title
     }
 
+    pub fn rename(&mut self, title: String) -> Result<(), ListError> {
+        self.title = title;
+        Ok(())
+    }
+
     pub fn add(&mut self, description: String) -> Result<(), ListError> {
         self.tasks.push(Task::new(description));
         Ok(())

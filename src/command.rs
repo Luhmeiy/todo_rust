@@ -9,6 +9,8 @@ pub enum Command {
     Lists,
     Switch(ListId),
     RemoveList(ListId),
+    Rename(usize, String),
+    RenameCurrent(String),
     Add(String),
     List,
     Update(TaskId, String),
@@ -43,6 +45,20 @@ impl Command {
                 Ok(id) if id > 0 => Ok(Command::RemoveList(ListId::Number(id - 1))),
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Ok(Command::RemoveList(ListId::String(query.join(" ")))),
+            },
+            ["rename"] => Err("rename requires a new list title.".to_string()),
+            ["rename", rest @ ..] => match rest.len() {
+                0 => unreachable!(),
+                1 => Ok(Command::RenameCurrent(rest[0].to_string())),
+                _ => {
+                    if let Ok(id) = rest[0].parse::<usize>() {
+                        let title = rest[1..].join(" ");
+                        Ok(Command::Rename(id - 1, title))
+                    } else {
+                        let title = rest.join(" ");
+                        Ok(Command::RenameCurrent(title))
+                    }
+                }
             },
             ["add"] => Err("add requires a task description.".to_string()),
             ["add", rest @ ..] => {
@@ -97,6 +113,11 @@ impl Command {
             Command::Lists => list_manager.list()?,
             Command::Switch(id) => list_manager.switch(id)?,
             Command::RemoveList(id) => list_manager.delete(id)?,
+            Command::Rename(id, title) => list_manager.rename_by_id(id, title)?,
+            Command::RenameCurrent(title) => {
+                let tasks = list_manager.get_current_list()?;
+                tasks.rename(title)?
+            }
             Command::Add(task) => {
                 let tasks = list_manager.get_current_list()?;
                 tasks.add(task)?

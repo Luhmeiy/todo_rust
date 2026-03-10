@@ -54,6 +54,15 @@ impl ListManager {
         Ok(&mut self.lists[self.current_list])
     }
 
+    pub fn rename_by_id(&mut self, id: usize, title: String) -> Result<(), ManagerError> {
+        if id >= self.lists.len() {
+            return Err(ManagerError::NotFound);
+        }
+
+        let _ = self.lists[id].rename(title);
+        Ok(())
+    }
+
     pub fn add(&mut self, title: String) -> Result<(), ManagerError> {
         self.lists.push(TaskList::new(title));
         Ok(())
