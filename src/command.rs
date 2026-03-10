@@ -7,6 +7,7 @@ use crate::{
 pub enum Command {
     MakeList(String),
     Lists,
+    Switch(ListId),
     RemoveList(ListId),
     Add(String),
     List,
@@ -31,6 +32,12 @@ impl Command {
             }
             ["lists"] => Ok(Command::Lists),
             ["lists", _rest @ ..] => Err("lists takes no parameters.".to_string()),
+            ["switch"] => Err("switch requires an ID or list title.".to_string()),
+            ["switch", query @ ..] => match query[0].parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::Switch(ListId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Ok(Command::Switch(ListId::String(query.join(" ")))),
+            },
             ["rmlist"] => Err("rmlist requires an ID or list title.".to_string()),
             ["rmlist", query @ ..] => match query[0].parse::<usize>() {
                 Ok(id) if id > 0 => Ok(Command::RemoveList(ListId::Number(id - 1))),
@@ -88,6 +95,7 @@ impl Command {
         match self {
             Command::MakeList(list) => list_manager.add(list)?,
             Command::Lists => list_manager.list()?,
+            Command::Switch(id) => list_manager.switch(id)?,
             Command::RemoveList(id) => list_manager.delete(id)?,
             Command::Add(task) => {
                 let tasks = list_manager.get_current_list()?;

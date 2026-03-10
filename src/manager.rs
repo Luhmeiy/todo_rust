@@ -71,8 +71,8 @@ impl ListManager {
         Ok(())
     }
 
-    pub fn delete(&mut self, query: ListId) -> Result<(), ManagerError> {
-        let id = match query {
+    fn resolve_index(&self, query: ListId) -> Result<usize, ManagerError> {
+        match query {
             ListId::Number(id) => {
                 if id < self.lists.len() {
                     Ok(id)
@@ -95,8 +95,17 @@ impl ListManager {
                     _ => Err(ManagerError::MultipleMatches(matches)),
                 }
             }
-        }?;
+        }
+    }
 
+    pub fn switch(&mut self, query: ListId) -> Result<(), ManagerError> {
+        let id = self.resolve_index(query)?;
+        self.current_list = id;
+        Ok(())
+    }
+
+    pub fn delete(&mut self, query: ListId) -> Result<(), ManagerError> {
+        let id = self.resolve_index(query)?;
         self.lists.remove(id);
         Ok(())
     }
