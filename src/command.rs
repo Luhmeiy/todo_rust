@@ -22,6 +22,7 @@ pub enum Command {
     DeleteChecked,
     DeleteUnchecked,
     Delete(TaskId),
+    Exit,
 }
 
 impl Command {
@@ -106,6 +107,7 @@ impl Command {
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Ok(Command::Delete(TaskId::String(query.join(" ")))),
             },
+            ["exit", _rest @ ..] => Ok(Command::Exit),
             [command, ..] => Err(format!("Invalid command: {command}")),
             [] => Err("Empty input.".to_string()),
         }
@@ -165,6 +167,10 @@ impl Command {
             Command::Delete(id) => {
                 let tasks = list_manager.get_current_list()?;
                 tasks.delete(id)?
+            }
+            Command::Exit => {
+                println!("Exiting...");
+                std::process::exit(0);
             }
         }
         Ok(())
