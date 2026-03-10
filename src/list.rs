@@ -47,6 +47,15 @@ impl TaskList {
         &self.title
     }
 
+    fn is_not_empty<F: FnMut(&mut Vec<Task>)>(&mut self, mut f: F) -> Result<(), ListError> {
+        if self.tasks.is_empty() {
+            return Err(ListError::Empty);
+        } else {
+            f(&mut self.tasks);
+            Ok(())
+        }
+    }
+
     pub fn rename(&mut self, title: String) -> Result<(), ListError> {
         self.title = title;
         Ok(())
@@ -57,16 +66,12 @@ impl TaskList {
         Ok(())
     }
 
-    pub fn list(&self) -> Result<(), ListError> {
-        if self.tasks.is_empty() {
-            return Err(ListError::Empty);
-        }
-
-        for task in self.tasks.iter() {
-            task.display();
-        }
-
-        Ok(())
+    pub fn list(&mut self) -> Result<(), ListError> {
+        self.is_not_empty(|tasks| {
+            for task in tasks.iter() {
+                task.display();
+            }
+        })
     }
 
     fn resolve_index(&self, query: TaskId) -> Result<usize, ListError> {
@@ -102,20 +107,12 @@ impl TaskList {
         Ok(())
     }
 
-    fn is_not_empty<F: FnMut(&mut Task)>(&mut self, mut f: F) -> Result<(), ListError> {
-        if self.tasks.is_empty() {
-            return Err(ListError::Empty);
-        } else {
-            for task in self.tasks.iter_mut() {
-                f(task)
-            }
-
-            Ok(())
-        }
-    }
-
     pub fn check_all(&mut self) -> Result<(), ListError> {
-        self.is_not_empty(|task| task.check())
+        self.is_not_empty(|tasks| {
+            for task in tasks.iter_mut() {
+                task.check()
+            }
+        })
     }
 
     pub fn check(&mut self, query: TaskId) -> Result<(), ListError> {
@@ -125,7 +122,11 @@ impl TaskList {
     }
 
     pub fn uncheck_all(&mut self) -> Result<(), ListError> {
-        self.is_not_empty(|task| task.uncheck())
+        self.is_not_empty(|tasks| {
+            for task in tasks.iter_mut() {
+                task.uncheck()
+            }
+        })
     }
 
     pub fn uncheck(&mut self, query: TaskId) -> Result<(), ListError> {
@@ -135,12 +136,14 @@ impl TaskList {
     }
 
     pub fn delete_all(&mut self) -> Result<(), ListError> {
-        if self.tasks.is_empty() {
-            return Err(ListError::Empty);
-        }
+        self.is_not_empty(|tasks| tasks.clear())
+    }
 
-        self.tasks.clear();
-        Ok(())
+    pub fn delete_checked(&mut self) -> Result<(), ListError> {
+        self.is_not_empty(|tasks| tasks.retain(|task| !task.is_checked()))
+    }
+    pub fn delete_unchecked(&mut self) -> Result<(), ListError> {
+        self.is_not_empty(|tasks| tasks.retain(|task| task.is_checked()))
     }
 
     pub fn delete(&mut self, query: TaskId) -> Result<(), ListError> {

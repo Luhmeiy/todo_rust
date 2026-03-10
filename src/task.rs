@@ -15,6 +15,10 @@ impl Task {
         &self.description
     }
 
+    pub fn is_checked(&self) -> bool {
+        self.checked
+    }
+
     pub fn display(&self) {
         let check = if self.checked { "x" } else { " " };
         println!("- [{check}] {}", self.description);

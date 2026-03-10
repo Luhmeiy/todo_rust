@@ -19,6 +19,8 @@ pub enum Command {
     UncheckAll,
     Uncheck(TaskId),
     DeleteAll,
+    DeleteChecked,
+    DeleteUnchecked,
     Delete(TaskId),
 }
 
@@ -97,6 +99,8 @@ impl Command {
             },
             ["delete"] => Err("delete requires an ID or task description.".to_string()),
             ["delete", "--all", _rest @ ..] => Ok(Command::DeleteAll),
+            ["delete", "--checked", _rest @ ..] => Ok(Command::DeleteChecked),
+            ["delete", "--unchecked", _rest @ ..] => Ok(Command::DeleteUnchecked),
             ["delete", query @ ..] => match query[0].parse::<usize>() {
                 Ok(id) if id > 0 => Ok(Command::Delete(TaskId::Number(id - 1))),
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
@@ -145,6 +149,14 @@ impl Command {
             Command::Uncheck(id) => {
                 let tasks = list_manager.get_current_list()?;
                 tasks.uncheck(id)?
+            }
+            Command::DeleteChecked => {
+                let tasks = list_manager.get_current_list()?;
+                tasks.delete_checked()?
+            }
+            Command::DeleteUnchecked => {
+                let tasks = list_manager.get_current_list()?;
+                tasks.delete_unchecked()?
             }
             Command::DeleteAll => {
                 let tasks = list_manager.get_current_list()?;
