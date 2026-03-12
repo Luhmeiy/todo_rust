@@ -126,6 +126,7 @@ impl ListManager {
 
     pub fn delete(&mut self, query: ListId) -> Result<TaskList, ManagerError> {
         let id = self.resolve_index(query)?;
+        self.current_list = self.current_list.saturating_sub(1);
         let task = self.lists.remove(id);
         Ok(task)
     }
