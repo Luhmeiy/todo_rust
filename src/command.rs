@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::{
     error::AppError,
     help,
@@ -119,18 +121,32 @@ impl Command {
 
     pub fn execute(self, list_manager: &mut ListManager) -> Result<(), AppError> {
         match self {
-            Command::MakeList(list) => list_manager.add(list)?,
+            Command::MakeList(list) => {
+                let list = list_manager.add(list)?;
+                println!("Created list {}", list.get_title().cyan())
+            }
             Command::Lists => list_manager.list()?,
-            Command::Switch(id) => list_manager.switch(id)?,
-            Command::RemoveList(id) => list_manager.delete(id)?,
-            Command::Rename(id, title) => list_manager.rename_by_id(id, title)?,
+            Command::Switch(id) => {
+                let title = list_manager.switch(id)?;
+                println!("Switched to list {}", title.cyan())
+            }
+            Command::RemoveList(id) => {
+                let list = list_manager.delete(id)?;
+                println!("Removed list {}", list.get_title().cyan())
+            }
+            Command::Rename(id, title) => {
+                let (old_title, new_title) = list_manager.rename_by_id(id, title)?;
+                println!("Renamed list {} to {}", old_title.cyan(), new_title.cyan())
+            }
             Command::RenameCurrent(title) => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.rename(title)?
+                let (old_title, new_title) = tasks.rename(title)?;
+                println!("Renamed list {} to {}", old_title.cyan(), new_title.cyan())
             }
             Command::Add(task) => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.add(task)?
+                let task = tasks.add(task)?;
+                println!("Added task {}", task.get_description().cyan())
             }
             Command::List => {
                 let tasks = list_manager.get_current_list()?;
@@ -138,39 +154,52 @@ impl Command {
             }
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.update(id, task)?
+                let (old_description, new_description) = tasks.update(id, task)?;
+                println!(
+                    "Renamed task {} to {}",
+                    old_description.cyan(),
+                    new_description.cyan()
+                )
             }
             Command::CheckAll => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.check_all()?
+                tasks.check_all()?;
+                println!("Checked all tasks")
             }
             Command::Check(id) => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.check(id)?
+                let description = tasks.check(id)?;
+                println!("Checked task {}", description.cyan())
             }
             Command::UncheckAll => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.uncheck_all()?
+                tasks.uncheck_all()?;
+                println!("Unchecked all tasks")
             }
             Command::Uncheck(id) => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.uncheck(id)?
+                let description = tasks.uncheck(id)?;
+                println!("Unchecked task {}", description.cyan())
             }
             Command::DeleteChecked => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.delete_checked()?
+                tasks.delete_checked()?;
+                println!("Deleted all checked tasks")
             }
             Command::DeleteUnchecked => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.delete_unchecked()?
+                tasks.delete_unchecked()?;
+                println!("Deleted all unchecked tasks")
             }
             Command::DeleteAll => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.delete_all()?
+                tasks.delete_all()?;
+                println!("Deleted all tasks")
             }
             Command::Delete(id) => {
                 let tasks = list_manager.get_current_list()?;
-                tasks.delete(id)?
+                let task = tasks.delete(id)?;
+                println!("Deleted task {}", task.get_description().cyan())
             }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {

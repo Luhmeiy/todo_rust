@@ -1,4 +1,5 @@
 use crate::list::TaskList;
+use colored::*;
 
 #[derive(PartialEq)]
 pub enum ListId {
@@ -54,18 +55,22 @@ impl ListManager {
         Ok(&mut self.lists[self.current_list])
     }
 
-    pub fn rename_by_id(&mut self, id: usize, title: String) -> Result<(), ManagerError> {
+    pub fn rename_by_id(
+        &mut self,
+        id: usize,
+        title: String,
+    ) -> Result<(String, &str), ManagerError> {
         if id >= self.lists.len() {
             return Err(ManagerError::NotFound);
         }
 
-        let _ = self.lists[id].rename(title);
-        Ok(())
+        let (old_title, new_title) = self.lists[id].rename(title).unwrap();
+        Ok((old_title, new_title))
     }
 
-    pub fn add(&mut self, title: String) -> Result<(), ManagerError> {
+    pub fn add(&mut self, title: String) -> Result<&TaskList, ManagerError> {
         self.lists.push(TaskList::new(title));
-        Ok(())
+        Ok(self.lists.last().unwrap())
     }
 
     pub fn list(&self) -> Result<(), ManagerError> {
@@ -73,8 +78,14 @@ impl ListManager {
             return Err(ManagerError::Empty);
         }
 
-        for list in self.lists.iter() {
-            println!("{}", list.get_title())
+        for (index, list) in self.lists.iter().enumerate() {
+            let current = if index == self.current_list {
+                "[Current]".cyan().to_string()
+            } else {
+                "".to_string()
+            };
+
+            println!("{}. {} {current}", index + 1, list.get_title())
         }
 
         Ok(())
@@ -107,15 +118,15 @@ impl ListManager {
         }
     }
 
-    pub fn switch(&mut self, query: ListId) -> Result<(), ManagerError> {
+    pub fn switch(&mut self, query: ListId) -> Result<&str, ManagerError> {
         let id = self.resolve_index(query)?;
         self.current_list = id;
-        Ok(())
+        Ok(self.lists[id].get_title())
     }
 
-    pub fn delete(&mut self, query: ListId) -> Result<(), ManagerError> {
+    pub fn delete(&mut self, query: ListId) -> Result<TaskList, ManagerError> {
         let id = self.resolve_index(query)?;
-        self.lists.remove(id);
-        Ok(())
+        let task = self.lists.remove(id);
+        Ok(task)
     }
 }

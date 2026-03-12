@@ -6,6 +6,7 @@ pub enum TaskId {
     String(String),
 }
 
+#[derive(Debug)]
 pub enum ListError {
     Empty,
     NotFound,
@@ -43,7 +44,7 @@ impl TaskList {
         }
     }
 
-    pub fn get_title(&self) -> &String {
+    pub fn get_title(&self) -> &str {
         &self.title
     }
 
@@ -56,14 +57,14 @@ impl TaskList {
         }
     }
 
-    pub fn rename(&mut self, title: String) -> Result<(), ListError> {
-        self.title = title;
-        Ok(())
+    pub fn rename(&mut self, title: String) -> Result<(String, &str), ListError> {
+        let old_title = std::mem::replace(&mut self.title, title);
+        Ok((old_title, &self.title))
     }
 
-    pub fn add(&mut self, description: String) -> Result<(), ListError> {
+    pub fn add(&mut self, description: String) -> Result<&Task, ListError> {
         self.tasks.push(Task::new(description));
-        Ok(())
+        Ok(self.tasks.last().unwrap())
     }
 
     pub fn list(&mut self) -> Result<(), ListError> {
@@ -101,10 +102,14 @@ impl TaskList {
         }
     }
 
-    pub fn update(&mut self, query: TaskId, description: String) -> Result<(), ListError> {
+    pub fn update(
+        &mut self,
+        query: TaskId,
+        description: String,
+    ) -> Result<(String, &str), ListError> {
         let id = self.resolve_index(query)?;
-        self.tasks[id].update(description);
-        Ok(())
+        let (old_description, new_description) = self.tasks[id].update(description);
+        Ok((old_description, new_description))
     }
 
     pub fn check_all(&mut self) -> Result<(), ListError> {
@@ -115,10 +120,11 @@ impl TaskList {
         })
     }
 
-    pub fn check(&mut self, query: TaskId) -> Result<(), ListError> {
+    pub fn check(&mut self, query: TaskId) -> Result<&str, ListError> {
         let id = self.resolve_index(query)?;
-        self.tasks[id].check();
-        Ok(())
+        let task = &mut self.tasks[id];
+        task.check();
+        Ok(task.get_description())
     }
 
     pub fn uncheck_all(&mut self) -> Result<(), ListError> {
@@ -129,10 +135,11 @@ impl TaskList {
         })
     }
 
-    pub fn uncheck(&mut self, query: TaskId) -> Result<(), ListError> {
+    pub fn uncheck(&mut self, query: TaskId) -> Result<&str, ListError> {
         let id = self.resolve_index(query)?;
-        self.tasks[id].uncheck();
-        Ok(())
+        let task = &mut self.tasks[id];
+        task.uncheck();
+        Ok(task.get_description())
     }
 
     pub fn delete_all(&mut self) -> Result<(), ListError> {
@@ -146,9 +153,9 @@ impl TaskList {
         self.is_not_empty(|tasks| tasks.retain(|task| task.is_checked()))
     }
 
-    pub fn delete(&mut self, query: TaskId) -> Result<(), ListError> {
+    pub fn delete(&mut self, query: TaskId) -> Result<Task, ListError> {
         let id = self.resolve_index(query)?;
-        self.tasks.remove(id);
-        Ok(())
+        let task = self.tasks.remove(id);
+        Ok(task)
     }
 }
