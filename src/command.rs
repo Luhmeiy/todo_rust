@@ -1,5 +1,6 @@
 use crate::{
     error::AppError,
+    help,
     list::TaskId,
     manager::{ListId, ListManager},
 };
@@ -22,6 +23,7 @@ pub enum Command {
     DeleteChecked,
     DeleteUnchecked,
     Delete(TaskId),
+    Help(Option<String>),
     Exit,
 }
 
@@ -107,6 +109,8 @@ impl Command {
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Ok(Command::Delete(TaskId::String(query.join(" ")))),
             },
+            ["help"] => Ok(Command::Help(None)),
+            ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
             [command, ..] => Err(format!("Invalid command: {command}")),
             [] => Err("Empty input.".to_string()),
@@ -168,6 +172,13 @@ impl Command {
                 let tasks = list_manager.get_current_list()?;
                 tasks.delete(id)?
             }
+            Command::Help(None) => println!("{}", help::GENERAL.trim()),
+            Command::Help(Some(command)) => match help::for_command(&command) {
+                Some(text) => println!("{}", text.trim()),
+                None => println!(
+                    "No help available for '{command}'. Try 'help' for a list of commands."
+                ),
+            },
             Command::Exit => {
                 println!("Exiting...");
                 std::process::exit(0);
