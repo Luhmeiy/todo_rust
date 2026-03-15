@@ -7,6 +7,12 @@ use crate::{
     manager::{ListId, ListManager},
 };
 
+const ALL_COMMANDS: &[&str] = &[
+    "mklist", "lists", "switch", "rmlist", "rename", "add", "list", "update", "check", "uncheck",
+    "delete", "help", "exit",
+];
+const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "help", "exit"];
+
 pub enum Command {
     MakeList(String),
     Lists,
@@ -30,7 +36,22 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn parse_command(command: &str) -> Result<Self, String> {
+    fn allowed_when_empty(input: &str, list_manager: &ListManager) -> Result<(), String> {
+        if list_manager.is_empty() {
+            let first_word = input.split_whitespace().next().unwrap_or("");
+
+            if ALL_COMMANDS.contains(&first_word) && !ALLOWED_EMPTY.contains(&first_word) {
+                return Err(
+                        "A list is necessary to perform this action. Create a new list with \"mklist name of your list\"".to_string(),
+                    );
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn parse_command(command: &str, list_manager: &ListManager) -> Result<Self, String> {
+        Self::allowed_when_empty(command, list_manager)?;
         let split_command: Vec<&str> = command.split_whitespace().collect();
 
         match split_command.as_slice() {

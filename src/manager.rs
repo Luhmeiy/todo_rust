@@ -55,6 +55,10 @@ impl ListManager {
         Ok(&mut self.lists[self.current_list])
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.lists.is_empty()
+    }
+
     pub fn rename_by_id(
         &mut self,
         id: usize,

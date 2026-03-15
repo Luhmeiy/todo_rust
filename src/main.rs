@@ -31,7 +31,7 @@ fn main() {
             continue;
         };
 
-        match command::Command::parse_command(&input) {
+        match command::Command::parse_command(&input, &mut list_manager) {
             Ok(command) => {
                 if let Err(error) = command.execute(&mut list_manager) {
                     is_error = true;
