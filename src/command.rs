@@ -236,4 +236,25 @@ impl Command {
         }
         Ok(())
     }
+
+    pub fn is_mutation(&self) -> bool {
+        matches!(
+            self,
+            Command::MakeList(_)
+                | Command::Switch(_)
+                | Command::RemoveList(_)
+                | Command::Rename(_, _)
+                | Command::RenameCurrent(_)
+                | Command::Add(_)
+                | Command::Update(_, _)
+                | Command::CheckAll
+                | Command::Check(_)
+                | Command::UncheckAll
+                | Command::Uncheck(_)
+                | Command::DeleteAll
+                | Command::DeleteChecked
+                | Command::DeleteUnchecked
+                | Command::Delete(_)
+        )
+    }
 }

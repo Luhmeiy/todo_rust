@@ -1,4 +1,5 @@
 use crate::task::Task;
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq)]
 pub enum TaskId {
@@ -31,6 +32,7 @@ impl std::fmt::Display for ListError {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TaskList {
     title: String,
     tasks: Vec<Task>,

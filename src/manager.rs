@@ -1,5 +1,8 @@
 use crate::list::TaskList;
 use colored::*;
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
 
 #[derive(PartialEq)]
 pub enum ListId {
@@ -11,6 +14,8 @@ pub enum ManagerError {
     Empty,
     NotFound,
     MultipleMatches(Vec<(usize, String)>),
+    IoError(std::io::Error),
+    JsonError(serde_json::Error),
 }
 
 impl std::fmt::Display for ManagerError {
@@ -30,13 +35,17 @@ impl std::fmt::Display for ManagerError {
                 }
                 Ok(())
             }
+            ManagerError::IoError(e) => write!(f, "IO error: {e}"),
+            ManagerError::JsonError(e) => write!(f, "JSON error: {e}"),
         }
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ListManager {
     lists: Vec<TaskList>,
     current_list: usize,
+    path: PathBuf,
 }
 
 impl ListManager {
@@ -44,6 +53,7 @@ impl ListManager {
         Self {
             lists: Vec::new(),
             current_list: 0,
+            path: PathBuf::from("./todo_data.json"),
         }
     }
 
@@ -133,5 +143,22 @@ impl ListManager {
         self.current_list = self.current_list.saturating_sub(1);
         let task = self.lists.remove(id);
         Ok(task)
+    }
+
+    pub fn save(&mut self, path: Option<PathBuf>) -> Result<(), ManagerError> {
+        let path = path.unwrap_or(self.path.clone());
+
+        if path != self.path {
+            self.path = path
+        }
+
+        let json = serde_json::to_string_pretty(self).map_err(ManagerError::JsonError)?;
+        fs::write(&self.path, json).map_err(ManagerError::IoError)
+    }
+
+    pub fn load(path: Option<PathBuf>) -> Result<Self, ManagerError> {
+        let path = path.unwrap_or(PathBuf::from("./todo_data.json"));
+        let content = fs::read_to_string(path).map_err(ManagerError::IoError)?;
+        serde_json::from_str(&content).map_err(ManagerError::JsonError)
     }
 }

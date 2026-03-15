@@ -1,5 +1,7 @@
 use colored::*;
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
     description: String,
     checked: bool,
