@@ -20,8 +20,9 @@ Current List Tasks:
     --unchecked          Delete unchecked tasks
 
 Other:
-  save <path>           Save to a custom location
-  load <path>           Load from a custom location
+  save <@alias|path>     Save to an alias or custom location
+  load <@alias|path>     Load from an alias or custom location
+  alias add <@name> <path>  Create an alias for a file path
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
@@ -120,15 +121,25 @@ delete [--all | --checked | --unchecked | <id|description>]
 "#;
 
 pub const SAVE: &str = r#"
-save <path>
-    Save data to a custom file path
-    Example: save ./my_backup.json
+save <@alias|path>
+    Save data to an alias or custom file path
+    Examples:
+      save @work
+      save ./my_backup.json
 "#;
 
 pub const LOAD: &str = r#"
-load <path>
-    Load data from a custom file path
-    Example: load ./my_backup.json
+load <@alias|path>
+    Load data from an alias or custom file path
+    Examples:
+      load @work
+      load ./my_backup.json
+"#;
+
+pub const ALIAS_ADD: &str = r#"
+alias add <@name> <path>
+    Create an alias for a file path
+    Example: alias add @work ./work.json
 "#;
 
 pub const HELP: &str = r#"
@@ -159,6 +170,7 @@ pub fn for_command(cmd: &str) -> Option<&'static str> {
         "delete" => Some(DELETE),
         "save" => Some(SAVE),
         "load" => Some(LOAD),
+        "alias" => Some(ALIAS_ADD),
         "help" => Some(HELP),
         "exit" => Some(EXIT),
         _ => None,

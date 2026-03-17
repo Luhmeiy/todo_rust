@@ -1,7 +1,12 @@
-use crate::{config::ConfigError, list::ListError, manager::ManagerError};
+use crate::{
+    config::{AliasError, ConfigError},
+    list::ListError,
+    manager::ManagerError,
+};
 
 pub enum AppError {
     ConfigError(ConfigError),
+    AliasError(AliasError),
     ListError(ListError),
     ManagerError(ManagerError),
 }
@@ -9,6 +14,12 @@ pub enum AppError {
 impl From<ConfigError> for AppError {
     fn from(e: ConfigError) -> Self {
         AppError::ConfigError(e)
+    }
+}
+
+impl From<AliasError> for AppError {
+    fn from(e: AliasError) -> Self {
+        AppError::AliasError(e)
     }
 }
 
@@ -28,6 +39,7 @@ impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AppError::ConfigError(e) => e.fmt(f),
+            AppError::AliasError(e) => e.fmt(f),
             AppError::ListError(e) => e.fmt(f),
             AppError::ManagerError(e) => e.fmt(f),
         }

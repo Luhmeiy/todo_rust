@@ -12,7 +12,13 @@ mod task;
 fn main() {
     let mut config = match config::Config::load() {
         Ok(loaded) => loaded,
-        Err(_) => config::Config::new(),
+        Err(_) => {
+            let cfg = config::Config::new();
+            if let Err(e) = cfg.save() {
+                eprintln!("{} {e}", "Warning:".yellow())
+            }
+            cfg
+        }
     };
 
     let mut list_manager = match manager::ListManager::load(config.get_path().to_path_buf()) {

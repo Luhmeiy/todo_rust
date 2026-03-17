@@ -11,9 +11,9 @@ use crate::{
 
 const ALL_COMMANDS: &[&str] = &[
     "mklist", "lists", "switch", "rmlist", "rename", "add", "list", "update", "check", "uncheck",
-    "delete", "save", "load", "help", "exit",
+    "delete", "save", "load", "alias", "help", "exit",
 ];
-const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "load", "help", "exit"];
+const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "load", "alias", "help", "exit"];
 
 pub enum Command {
     MakeList(String),
@@ -35,6 +35,7 @@ pub enum Command {
     Delete(TaskId),
     Save(String),
     Load(String),
+    AliasAdd(String, String),
     Help(Option<String>),
     Exit,
 }
@@ -140,6 +141,12 @@ impl Command {
             ["save", path @ ..] => Ok(Command::Save(path.join(" "))),
             ["load"] => Err("load requires a file path.".to_string()),
             ["load", path @ ..] => Ok(Command::Load(path.join(" "))),
+            ["alias"] => Err("alias requires a subcommand (add, list, remove).".to_string()),
+            ["alias", "add"] => Err("alias add requires a name and path.".to_string()),
+            ["alias", "add", _alias] => Err("alias add also requires a path.".to_string()),
+            ["alias", "add", alias, path @ ..] => {
+                Ok(Command::AliasAdd(alias.to_string(), path.join(" ")))
+            }
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -235,7 +242,13 @@ impl Command {
                 println!("Deleted task {}", task.get_description().cyan())
             }
             Command::Save(path) => {
-                let path_buf = PathBuf::from(path.trim());
+                let mut path_buf = PathBuf::from(path.trim());
+
+                if path.starts_with("@") {
+                    let path_from_alias = config.get_path_from_alias(&path)?;
+                    path_buf = path_from_alias.to_path_buf();
+                }
+
                 let path = list_manager.save(Some(path_buf))?;
 
                 config.change_path(PathBuf::from(path));
@@ -246,7 +259,13 @@ impl Command {
                 println!("Lists saved to {}", path.cyan())
             }
             Command::Load(path) => {
-                let path_buf = PathBuf::from(path.trim());
+                let mut path_buf = PathBuf::from(path.trim());
+
+                if path.starts_with("@") {
+                    let path_from_alias = config.get_path_from_alias(&path)?;
+                    path_buf = path_from_alias.to_path_buf();
+                }
+
                 *list_manager = ListManager::load(path_buf.clone())?;
 
                 config.change_path(path_buf);
@@ -258,6 +277,13 @@ impl Command {
                     "Loaded lists from {}",
                     list_manager.get_path().to_string_lossy().cyan()
                 )
+            }
+            Command::AliasAdd(alias, path) => {
+                let alias = config.add_alias(alias, PathBuf::from(path))?;
+                if let Err(e) = config.save() {
+                    eprintln!("{} {e}", "Warning:".yellow())
+                }
+                println!("Added alias {}", alias.cyan())
             }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {
