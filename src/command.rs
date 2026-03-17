@@ -11,9 +11,9 @@ use crate::{
 
 const ALL_COMMANDS: &[&str] = &[
     "mklist", "lists", "switch", "rmlist", "rename", "add", "list", "update", "check", "uncheck",
-    "delete", "save", "help", "exit",
+    "delete", "save", "load", "help", "exit",
 ];
-const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "help", "exit"];
+const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "load", "help", "exit"];
 
 pub enum Command {
     MakeList(String),
@@ -34,6 +34,7 @@ pub enum Command {
     DeleteUnchecked,
     Delete(TaskId),
     Save(String),
+    Load(String),
     Help(Option<String>),
     Exit,
 }
@@ -137,6 +138,8 @@ impl Command {
             },
             ["save"] => Err("save requires a file path.".to_string()),
             ["save", path @ ..] => Ok(Command::Save(path.join(" "))),
+            ["load"] => Err("load requires a file path.".to_string()),
+            ["load", path @ ..] => Ok(Command::Load(path.join(" "))),
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -231,6 +234,15 @@ impl Command {
                 let path_buf = PathBuf::from(path.trim());
                 let path = list_manager.save(Some(path_buf))?;
                 println!("Lists saved to {}", path.cyan())
+            }
+            Command::Load(path) => {
+                let path_buf = PathBuf::from(path.trim());
+                *list_manager = ListManager::load(Some(path_buf))?;
+
+                println!(
+                    "Loaded lists from {}",
+                    list_manager.get_path().to_string_lossy().cyan()
+                )
             }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {

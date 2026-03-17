@@ -21,6 +21,7 @@ Current List Tasks:
 
 Other:
   save <path>           Save to a custom location
+  load <path>           Load from a custom location
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
@@ -124,6 +125,12 @@ save <path>
     Example: save ./my_backup.json
 "#;
 
+pub const LOAD: &str = r#"
+load <path>
+    Load data from a custom file path
+    Example: load ./my_backup.json
+"#;
+
 pub const HELP: &str = r#"
 help [command]
     Display general help with all commands or detailed help for a specific command
@@ -151,6 +158,7 @@ pub fn for_command(cmd: &str) -> Option<&'static str> {
         "uncheck" => Some(UNCHECK),
         "delete" => Some(DELETE),
         "save" => Some(SAVE),
+        "load" => Some(LOAD),
         "help" => Some(HELP),
         "exit" => Some(EXIT),
         _ => None,

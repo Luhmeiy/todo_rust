@@ -2,7 +2,7 @@ use crate::list::TaskList;
 use colored::*;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(PartialEq)]
 pub enum ListId {
@@ -59,6 +59,10 @@ impl ListManager {
             current_list: 0,
             path: PathBuf::from("./todo_data.json"),
         }
+    }
+
+    pub fn get_path(&self) -> &Path {
+        &self.path
     }
 
     pub fn get_current_list(&mut self) -> Result<&mut TaskList, ManagerError> {
@@ -167,6 +171,11 @@ impl ListManager {
 
     pub fn load(path: Option<PathBuf>) -> Result<Self, ManagerError> {
         let path = path.unwrap_or(PathBuf::from("./todo_data.json"));
+
+        if !path.to_string_lossy().ends_with(".json") {
+            return Err(ManagerError::InvalidFileFormat);
+        }
+
         let content = fs::read_to_string(path).map_err(ManagerError::IoError)?;
         serde_json::from_str(&content).map_err(ManagerError::JsonError)
     }
