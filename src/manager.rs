@@ -16,6 +16,7 @@ pub enum ManagerError {
     MultipleMatches(Vec<(usize, String)>),
     IoError(std::io::Error),
     JsonError(serde_json::Error),
+    InvalidFileFormat,
 }
 
 impl std::fmt::Display for ManagerError {
@@ -37,6 +38,9 @@ impl std::fmt::Display for ManagerError {
             }
             ManagerError::IoError(e) => write!(f, "IO error: {e}"),
             ManagerError::JsonError(e) => write!(f, "JSON error: {e}"),
+            ManagerError::InvalidFileFormat => {
+                write!(f, "Invalid file format. Use .json extension.")
+            }
         }
     }
 }
@@ -145,15 +149,20 @@ impl ListManager {
         Ok(task)
     }
 
-    pub fn save(&mut self, path: Option<PathBuf>) -> Result<(), ManagerError> {
+    pub fn save(&mut self, path: Option<PathBuf>) -> Result<&str, ManagerError> {
         let path = path.unwrap_or(self.path.clone());
+
+        if !path.to_string_lossy().ends_with(".json") {
+            return Err(ManagerError::InvalidFileFormat);
+        }
 
         if path != self.path {
             self.path = path
         }
 
         let json = serde_json::to_string_pretty(self).map_err(ManagerError::JsonError)?;
-        fs::write(&self.path, json).map_err(ManagerError::IoError)
+        fs::write(&self.path, json).map_err(ManagerError::IoError)?;
+        Ok(self.path.to_str().unwrap())
     }
 
     pub fn load(path: Option<PathBuf>) -> Result<Self, ManagerError> {

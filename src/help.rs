@@ -20,6 +20,7 @@ Current List Tasks:
     --unchecked          Delete unchecked tasks
 
 Other:
+  save <path>           Save to a custom location
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
@@ -117,6 +118,12 @@ delete [--all | --checked | --unchecked | <id|description>]
       delete Buy milk
 "#;
 
+pub const SAVE: &str = r#"
+save <path>
+    Save data to a custom file path
+    Example: save ./my_backup.json
+"#;
+
 pub const HELP: &str = r#"
 help [command]
     Display general help with all commands or detailed help for a specific command
@@ -143,6 +150,7 @@ pub fn for_command(cmd: &str) -> Option<&'static str> {
         "check" => Some(CHECK),
         "uncheck" => Some(UNCHECK),
         "delete" => Some(DELETE),
+        "save" => Some(SAVE),
         "help" => Some(HELP),
         "exit" => Some(EXIT),
         _ => None,

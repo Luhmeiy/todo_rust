@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use colored::Colorize;
 
 use crate::{
@@ -9,9 +11,9 @@ use crate::{
 
 const ALL_COMMANDS: &[&str] = &[
     "mklist", "lists", "switch", "rmlist", "rename", "add", "list", "update", "check", "uncheck",
-    "delete", "help", "exit",
+    "delete", "save", "help", "exit",
 ];
-const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "help", "exit"];
+const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "help", "exit"];
 
 pub enum Command {
     MakeList(String),
@@ -31,6 +33,7 @@ pub enum Command {
     DeleteChecked,
     DeleteUnchecked,
     Delete(TaskId),
+    Save(String),
     Help(Option<String>),
     Exit,
 }
@@ -132,6 +135,8 @@ impl Command {
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Ok(Command::Delete(TaskId::String(query.join(" ")))),
             },
+            ["save"] => Err("save requires a file path.".to_string()),
+            ["save", path @ ..] => Ok(Command::Save(path.join(" "))),
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -221,6 +226,11 @@ impl Command {
                 let tasks = list_manager.get_current_list()?;
                 let task = tasks.delete(id)?;
                 println!("Deleted task {}", task.get_description().cyan())
+            }
+            Command::Save(path) => {
+                let path_buf = PathBuf::from(path.trim());
+                let path = list_manager.save(Some(path_buf))?;
+                println!("Lists saved to {}", path.cyan())
             }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {
