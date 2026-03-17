@@ -169,9 +169,7 @@ impl ListManager {
         Ok(self.path.to_str().unwrap())
     }
 
-    pub fn load(path: Option<PathBuf>) -> Result<Self, ManagerError> {
-        let path = path.unwrap_or(PathBuf::from("./todo_data.json"));
-
+    pub fn load(path: PathBuf) -> Result<Self, ManagerError> {
         if !path.to_string_lossy().ends_with(".json") {
             return Err(ManagerError::InvalidFileFormat);
         }

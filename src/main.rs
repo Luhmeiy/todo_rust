@@ -2,6 +2,7 @@ use colored::Colorize;
 use std::io::{self, Write};
 
 mod command;
+mod config;
 mod error;
 mod help;
 mod list;
@@ -9,7 +10,12 @@ mod manager;
 mod task;
 
 fn main() {
-    let mut list_manager = match manager::ListManager::load(None) {
+    let mut config = match config::Config::load() {
+        Ok(loaded) => loaded,
+        Err(_) => config::Config::new(),
+    };
+
+    let mut list_manager = match manager::ListManager::load(config.get_path().to_path_buf()) {
         Ok(loaded) => loaded,
         Err(_) => manager::ListManager::new(),
     };
@@ -42,7 +48,7 @@ fn main() {
             Ok(command) => {
                 let is_mutation = command.is_mutation();
 
-                if let Err(error) = command.execute(&mut list_manager) {
+                if let Err(error) = command.execute(&mut list_manager, &mut config) {
                     is_error = true;
                     eprintln!("{} {error}", "Error:".red());
                 } else if is_mutation {

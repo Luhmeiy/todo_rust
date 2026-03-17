@@ -1,8 +1,8 @@
+use colored::Colorize;
 use std::path::PathBuf;
 
-use colored::Colorize;
-
 use crate::{
+    config::Config,
     error::AppError,
     help,
     list::TaskId,
@@ -148,7 +148,11 @@ impl Command {
         }
     }
 
-    pub fn execute(self, list_manager: &mut ListManager) -> Result<(), AppError> {
+    pub fn execute(
+        self,
+        list_manager: &mut ListManager,
+        config: &mut Config,
+    ) -> Result<(), AppError> {
         match self {
             Command::MakeList(list) => {
                 let list = list_manager.add(list)?;
@@ -233,11 +237,22 @@ impl Command {
             Command::Save(path) => {
                 let path_buf = PathBuf::from(path.trim());
                 let path = list_manager.save(Some(path_buf))?;
+
+                config.change_path(PathBuf::from(path));
+                if let Err(e) = config.save() {
+                    eprintln!("{} {e}", "Warning:".yellow())
+                }
+
                 println!("Lists saved to {}", path.cyan())
             }
             Command::Load(path) => {
                 let path_buf = PathBuf::from(path.trim());
-                *list_manager = ListManager::load(Some(path_buf))?;
+                *list_manager = ListManager::load(path_buf.clone())?;
+
+                config.change_path(path_buf);
+                if let Err(e) = config.save() {
+                    eprintln!("{} {e}", "Warning:".yellow())
+                }
 
                 println!(
                     "Loaded lists from {}",
