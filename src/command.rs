@@ -36,6 +36,7 @@ pub enum Command {
     Save(String),
     Load(String),
     AliasAdd(String, String),
+    AliasList,
     Help(Option<String>),
     Exit,
 }
@@ -147,6 +148,8 @@ impl Command {
             ["alias", "add", alias, path @ ..] => {
                 Ok(Command::AliasAdd(alias.to_string(), path.join(" ")))
             }
+            ["alias", "list"] => Ok(Command::AliasList),
+            ["alias", "list", _rest @ ..] => Err("alias list takes no parameters.".to_string()),
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -285,6 +288,7 @@ impl Command {
                 }
                 println!("Added alias {}", alias.cyan())
             }
+            Command::AliasList => config.list_alias()?,
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {
                 Some(text) => println!("{}", text.trim()),

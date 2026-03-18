@@ -1,3 +1,4 @@
+use colored::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -14,6 +15,7 @@ pub enum AliasError {
     NoSymbol(),
     InvalidPath,
     NotFound(String),
+    Empty,
 }
 
 impl std::fmt::Display for AliasError {
@@ -23,6 +25,7 @@ impl std::fmt::Display for AliasError {
             AliasError::NoSymbol() => write!(f, "Alias should start with @"),
             AliasError::InvalidPath => write!(f, "Invalid path"),
             AliasError::NotFound(name) => write!(f, "Alias '{}' not found", name),
+            AliasError::Empty => write!(f, "No aliases found"),
         }
     }
 }
@@ -77,6 +80,19 @@ impl Config {
             Some(_) => Err(AliasError::AlreadyExists(alias)),
             None => Ok(alias),
         }
+    }
+
+    pub fn list_alias(&self) -> Result<(), AliasError> {
+        if self.aliases.is_empty() {
+            return Err(AliasError::Empty);
+        }
+
+        for (alias, path) in self.aliases.iter() {
+            let alias_str = format!("{alias}:");
+            println!("{} {path:?}", alias_str.cyan())
+        }
+
+        Ok(())
     }
 
     pub fn change_path(&mut self, path: PathBuf) -> () {

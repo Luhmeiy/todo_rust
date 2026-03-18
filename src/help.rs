@@ -22,137 +22,154 @@ Current List Tasks:
 Other:
   save <@alias|path>     Save to an alias or custom location
   load <@alias|path>     Load from an alias or custom location
-  alias add <@name> <path>  Create an alias for a file path
+  alias <add|list>       Manage aliases
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
 
 pub const MKLIST: &str = r#"
 mklist <title>
-    Create a new list with the given title
-    Example: mklist Work
+  Create a new list with the given title
+  Example: mklist Work
 "#;
 
 pub const LISTS: &str = r#"
 lists
-    Display all existing lists
-    Example: lists
+  Display all existing lists
+  Example: lists
 "#;
 
 pub const SWITCH: &str = r#"
 switch <id|title>
-    Switch to a different list by ID or title
-    Examples:
-      switch 2
-      switch Work
+  Switch to a different list by ID or title
+  Examples:
+    switch 2
+    switch Work
 "#;
 
 pub const RMLIST: &str = r#"
 rmlist <id|title>
-    Remove a list by ID or title
-    Examples:
-      rmlist 2
-      rmlist Work
+  Remove a list by ID or title
+  Examples:
+    rmlist 2
+    rmlist Work
 "#;
 
 pub const RENAME: &str = r#"
 rename [id] <new title>
-    Rename a list by ID
-    If only one argument is given, rename the current list
-    Examples:
-      rename 3 Shopping  # rename list with ID 3 to "Shopping"
-      rename Projects    # rename current list to "Projects"
+  Rename a list by ID
+  If only one argument is given, rename the current list
+  Examples:
+    rename 3 Shopping  # rename list with ID 3 to "Shopping"
+    rename Projects    # rename current list to "Projects"
 "#;
 
 pub const ADD: &str = r#"
 add <task description>
-    Add a new task to the current list
-    Example: add Buy milk
+  Add a new task to the current list
+  Example: add Buy milk
 "#;
 
 pub const LIST: &str = r#"
 list
-    Display all tasks in the current list with their completion status
-    Example: list
+  Display all tasks in the current list with their completion status
 "#;
 
 pub const UPDATE: &str = r#"
 update <id> <new description>
-    Update an existing task description by ID
-    Example: update 2 Buy organic milk
+  Update an existing task description by ID
+  Example: update 2 Buy organic milk
 "#;
 
 pub const CHECK: &str = r#"
 check [--all | <id|description>]
-    Mark task(s) as done
-    • --all              : check all tasks in the current list
-    • <id>               : check task by ID
-    • <description>      : check task by description; if multiple match, choose from list
-    Examples:
-      check --all
-      check 3
-      check Buy milk
+  Mark task(s) as done
+  • --all                Check all tasks in the current list
+  • <id>                 Check task by ID
+  • <description>        Check task by description; if multiple match, choose from list
+  Examples:
+    check --all
+    check 3
+    check Buy milk
 "#;
 
 pub const UNCHECK: &str = r#"
 uncheck [--all | <id|description>]
-    Mark task(s) as not done
-    • --all              : uncheck all tasks in the current list
-    • <id>               : uncheck task by ID
-    • <description>      : uncheck task by description; if multiple match, choose from list
-    Examples:
-      uncheck --all
-      uncheck 5
-      uncheck Finish report
+  Mark task(s) as not done
+  • --all                Uncheck all tasks in the current list
+  • <id>                 Uncheck task by ID
+  • <description>        Uncheck task by description; if multiple match, choose from list
+  Examples:
+    uncheck --all
+    uncheck 5
+    uncheck Finish report
 "#;
 
 pub const DELETE: &str = r#"
 delete [--all | --checked | --unchecked | <id|description>]
-    Delete task(s)
-    • --all              : delete all tasks in the current list
-    • --checked          : delete completed tasks
-    • --unchecked        : delete incomplete tasks
-    • <id>               : delete task by ID
-    • <description>      : delete task by description; if multiple match, choose from list
-    Examples:
-      delete --checked
-      delete 4
-      delete Buy milk
+  Delete task(s)
+  • --all                Delete all tasks in the current list
+  • --checked            Delete completed tasks
+  • --unchecked          Delete incomplete tasks
+  • <id>                 Delete task by ID
+  • <description>        Delete task by description; if multiple match, choose from list
+  Examples:
+    delete --checked
+    delete 4
+    delete Buy milk
 "#;
 
 pub const SAVE: &str = r#"
 save <@alias|path>
-    Save data to an alias or custom file path
-    Examples:
-      save @work
-      save ./my_backup.json
+  Save data to an alias or custom file path
+  Examples:
+    save @work
+    save ./my_backup.json
 "#;
 
 pub const LOAD: &str = r#"
 load <@alias|path>
-    Load data from an alias or custom file path
-    Examples:
-      load @work
-      load ./my_backup.json
+  Load data from an alias or custom file path
+  Examples:
+    load @work
+    load ./my_backup.json
+"#;
+
+pub const ALIAS: &str = r#"
+alias <subcommand>
+  Manage aliases for file paths
+  
+  Subcommands:
+    add <@name> <path>   Create an alias
+    list                 List all aliases
+  
+  Examples:
+    alias add @work ./work.json
+    alias list
 "#;
 
 pub const ALIAS_ADD: &str = r#"
 alias add <@name> <path>
-    Create an alias for a file path
-    Example: alias add @work ./work.json
+  Create an alias for a file path
+  Example: alias add @work ./work.json
+"#;
+
+pub const ALIAS_LIST: &str = r#"
+alias list
+  List all saved aliases
 "#;
 
 pub const HELP: &str = r#"
 help [command]
-    Display general help with all commands or detailed help for a specific command
-    Examples:
-      help               # Display general help
-      help add           # Display detailed help for the 'add' command
+  Display general help with all commands or detailed help for a specific command
+  Examples:
+    help                 # Display general help
+    help add             # Display detailed help for the 'add' command
 "#;
 
 pub const EXIT: &str = r#"
 exit
-    Exit the application
+  Exit the application
 "#;
 
 pub fn for_command(cmd: &str) -> Option<&'static str> {
@@ -170,7 +187,9 @@ pub fn for_command(cmd: &str) -> Option<&'static str> {
         "delete" => Some(DELETE),
         "save" => Some(SAVE),
         "load" => Some(LOAD),
-        "alias" => Some(ALIAS_ADD),
+        "alias" => Some(ALIAS),
+        "alias add" => Some(ALIAS_ADD),
+        "alias list" => Some(ALIAS_LIST),
         "help" => Some(HELP),
         "exit" => Some(EXIT),
         _ => None,
