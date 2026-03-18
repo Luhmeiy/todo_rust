@@ -22,7 +22,7 @@ Current List Tasks:
 Other:
   save <@alias|path>     Save to an alias or custom location
   load <@alias|path>     Load from an alias or custom location
-  alias <add|list>       Manage aliases
+  alias <add|list|remove>  Manage aliases
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
@@ -142,10 +142,12 @@ alias <subcommand>
   Subcommands:
     add <@name> <path>   Create an alias
     list                 List all aliases
+    remove <@name>       Remove an alias
   
   Examples:
     alias add @work ./work.json
     alias list
+    alias remove @work
 "#;
 
 pub const ALIAS_ADD: &str = r#"
@@ -157,6 +159,12 @@ alias add <@name> <path>
 pub const ALIAS_LIST: &str = r#"
 alias list
   List all saved aliases
+"#;
+
+pub const ALIAS_REMOVE: &str = r#"
+alias remove <@name>
+  Remove an alias
+  Example: alias remove @work
 "#;
 
 pub const HELP: &str = r#"
@@ -190,6 +198,7 @@ pub fn for_command(cmd: &str) -> Option<&'static str> {
         "alias" => Some(ALIAS),
         "alias add" => Some(ALIAS_ADD),
         "alias list" => Some(ALIAS_LIST),
+        "alias remove" => Some(ALIAS_REMOVE),
         "help" => Some(HELP),
         "exit" => Some(EXIT),
         _ => None,

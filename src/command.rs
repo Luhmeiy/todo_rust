@@ -37,6 +37,7 @@ pub enum Command {
     Load(String),
     AliasAdd(String, String),
     AliasList,
+    AliasRemove(String),
     Help(Option<String>),
     Exit,
 }
@@ -150,6 +151,8 @@ impl Command {
             }
             ["alias", "list"] => Ok(Command::AliasList),
             ["alias", "list", _rest @ ..] => Err("alias list takes no parameters.".to_string()),
+            ["alias", "remove"] => Err("alias remove requires a name.".to_string()),
+            ["alias", "remove", name @ ..] => Ok(Command::AliasRemove(name.join(" "))),
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -255,9 +258,7 @@ impl Command {
                 let path = list_manager.save(Some(path_buf))?;
 
                 config.change_path(PathBuf::from(path));
-                if let Err(e) = config.save() {
-                    eprintln!("{} {e}", "Warning:".yellow())
-                }
+                config.save_with_warning();
 
                 println!("Lists saved to {}", path.cyan())
             }
@@ -272,9 +273,7 @@ impl Command {
                 *list_manager = ListManager::load(path_buf.clone())?;
 
                 config.change_path(path_buf);
-                if let Err(e) = config.save() {
-                    eprintln!("{} {e}", "Warning:".yellow())
-                }
+                config.save_with_warning();
 
                 println!(
                     "Loaded lists from {}",
@@ -283,12 +282,15 @@ impl Command {
             }
             Command::AliasAdd(alias, path) => {
                 let alias = config.add_alias(alias, PathBuf::from(path))?;
-                if let Err(e) = config.save() {
-                    eprintln!("{} {e}", "Warning:".yellow())
-                }
+                config.save_with_warning();
                 println!("Added alias {}", alias.cyan())
             }
             Command::AliasList => config.list_alias()?,
+            Command::AliasRemove(alias) => {
+                let alias = config.remove_alias(alias)?;
+                config.save_with_warning();
+                println!("Removed alias {}", alias.cyan())
+            }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {
                 Some(text) => println!("{}", text.trim()),

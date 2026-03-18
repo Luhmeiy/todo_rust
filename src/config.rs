@@ -21,10 +21,10 @@ pub enum AliasError {
 impl std::fmt::Display for AliasError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AliasError::AlreadyExists(name) => write!(f, "Alias '{}' already exists", name),
+            AliasError::AlreadyExists(alias) => write!(f, "Alias '{}' already exists", alias),
             AliasError::NoSymbol() => write!(f, "Alias should start with @"),
             AliasError::InvalidPath => write!(f, "Invalid path"),
-            AliasError::NotFound(name) => write!(f, "Alias '{}' not found", name),
+            AliasError::NotFound(alias) => write!(f, "Alias '{}' not found", alias),
             AliasError::Empty => write!(f, "No aliases found"),
         }
     }
@@ -95,6 +95,13 @@ impl Config {
         Ok(())
     }
 
+    pub fn remove_alias(&mut self, alias: String) -> Result<String, AliasError> {
+        match self.aliases.remove(&alias) {
+            Some(_) => Ok(alias),
+            None => Err(AliasError::NotFound(alias)),
+        }
+    }
+
     pub fn change_path(&mut self, path: PathBuf) -> () {
         self.path = path
     }
@@ -102,6 +109,12 @@ impl Config {
     pub fn save(&self) -> Result<(), ConfigError> {
         let json = serde_json::to_string_pretty(self).map_err(ConfigError::JsonError)?;
         fs::write(PathBuf::from("./config.json"), json).map_err(|_| ConfigError::SaveFailed)
+    }
+
+    pub fn save_with_warning(&self) {
+        if let Err(e) = self.save() {
+            eprintln!("{}", format!("Warning: {e}").yellow())
+        }
     }
 
     pub fn load() -> Result<Self, ConfigError> {
