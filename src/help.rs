@@ -22,7 +22,12 @@ Current List Tasks:
 Other:
   save <@alias|path>     Save to an alias or custom location
   load <@alias|path>     Load from an alias or custom location
-  alias <add|list|remove>  Manage aliases
+  alias                  Manage aliases with subcommands
+    add <@name> <path>   Create an alias
+    list                 List all aliases
+    remove <@name>       Remove an alias
+    rename <@old> <@new> Rename an alias
+    path <@name> <path>  Update alias path
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
@@ -143,11 +148,15 @@ alias <subcommand>
     add <@name> <path>   Create an alias
     list                 List all aliases
     remove <@name>       Remove an alias
+    rename <@old> <@new> Rename an alias
+    path <@name> <path>  Update alias path
   
   Examples:
     alias add @work ./work.json
     alias list
     alias remove @work
+    alias rename @work @job
+    alias path @work ./new_work.json
 "#;
 
 pub const ALIAS_ADD: &str = r#"
@@ -165,6 +174,18 @@ pub const ALIAS_REMOVE: &str = r#"
 alias remove <@name>
   Remove an alias
   Example: alias remove @work
+"#;
+
+pub const ALIAS_RENAME: &str = r#"
+alias rename <@old> <@new>
+  Rename an alias
+  Example: alias rename @work @job
+"#;
+
+pub const ALIAS_PATH: &str = r#"
+alias path <@name> <path>
+  Update the path an alias points to
+  Example: alias path @work ./new_work.json
 "#;
 
 pub const HELP: &str = r#"
@@ -199,6 +220,8 @@ pub fn for_command(cmd: &str) -> Option<&'static str> {
         "alias add" => Some(ALIAS_ADD),
         "alias list" => Some(ALIAS_LIST),
         "alias remove" => Some(ALIAS_REMOVE),
+        "alias rename" => Some(ALIAS_RENAME),
+        "alias path" => Some(ALIAS_PATH),
         "help" => Some(HELP),
         "exit" => Some(EXIT),
         _ => None,

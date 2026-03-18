@@ -54,6 +54,13 @@ impl Config {
         }
     }
 
+    fn validate_alias_name(name: &str) -> Result<(), AliasError> {
+        if !name.starts_with("@") {
+            return Err(AliasError::NoSymbol());
+        }
+        Ok(())
+    }
+
     pub fn get_path(&self) -> &Path {
         &self.path
     }
@@ -66,9 +73,7 @@ impl Config {
     }
 
     pub fn add_alias(&mut self, alias: String, path: PathBuf) -> Result<String, AliasError> {
-        if !alias.starts_with("@") {
-            return Err(AliasError::NoSymbol());
-        }
+        Self::validate_alias_name(&alias)?;
 
         if self.aliases.contains_key(&alias) {
             return Err(AliasError::AlreadyExists(alias.clone()));
@@ -96,9 +101,53 @@ impl Config {
     }
 
     pub fn remove_alias(&mut self, alias: String) -> Result<String, AliasError> {
+        Self::validate_alias_name(&alias)?;
+
         match self.aliases.remove(&alias) {
             Some(_) => Ok(alias),
             None => Err(AliasError::NotFound(alias)),
+        }
+    }
+
+    pub fn rename_alias(
+        &mut self,
+        old_name: String,
+        new_name: String,
+    ) -> Result<(String, String), AliasError> {
+        Self::validate_alias_name(&old_name)?;
+        Self::validate_alias_name(&new_name)?;
+
+        let path = self
+            .aliases
+            .get(&old_name)
+            .ok_or(AliasError::NotFound(old_name.to_string()))?
+            .clone();
+
+        if self.aliases.contains_key(&new_name) {
+            return Err(AliasError::AlreadyExists(new_name));
+        }
+
+        self.aliases.remove(&old_name);
+        self.aliases.insert(new_name.clone(), path);
+
+        Ok((old_name, new_name))
+    }
+
+    pub fn update_path_alias(
+        &mut self,
+        name: String,
+        new_path: String,
+    ) -> Result<(String, String), AliasError> {
+        Self::validate_alias_name(&name)?;
+
+        match self.aliases.get_mut(&name) {
+            Some(path) => {
+                let absolute_path = fs::canonicalize(PathBuf::from(new_path.clone()))
+                    .map_err(|_| AliasError::InvalidPath)?;
+                *path = absolute_path;
+                Ok((name, new_path))
+            }
+            None => Err(AliasError::NotFound(name.to_string())),
         }
     }
 
@@ -122,7 +171,7 @@ impl Config {
         let content = fs::read_to_string(path).map_err(|_| ConfigError::LoadFailed)?;
         let mut config: Config = serde_json::from_str(&content).map_err(ConfigError::JsonError)?;
 
-        for (_alias, path) in config.aliases.iter_mut() {
+        for (_, path) in config.aliases.iter_mut() {
             if !path.is_absolute() {
                 if let Ok(absolute) = fs::canonicalize(&path) {
                     *path = absolute;

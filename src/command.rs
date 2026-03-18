@@ -38,6 +38,8 @@ pub enum Command {
     AliasAdd(String, String),
     AliasList,
     AliasRemove(String),
+    AliasRename(String, String),
+    AliasPath(String, String),
     Help(Option<String>),
     Exit,
 }
@@ -153,6 +155,17 @@ impl Command {
             ["alias", "list", _rest @ ..] => Err("alias list takes no parameters.".to_string()),
             ["alias", "remove"] => Err("alias remove requires a name.".to_string()),
             ["alias", "remove", name @ ..] => Ok(Command::AliasRemove(name.join(" "))),
+            ["alias", "rename"] => Err("alias rename requires old and new name.".to_string()),
+            ["alias", "rename", _old] => Err("alias rename also requires a new name.".to_string()),
+            ["alias", "rename", old_name, new_name] => Ok(Command::AliasRename(
+                old_name.to_string(),
+                new_name.to_string(),
+            )),
+            ["alias", "path"] => Err("alias path requires a name and path.".to_string()),
+            ["alias", "path", _name] => Err("alias path also requires a path.".to_string()),
+            ["alias", "path", name, path @ ..] => {
+                Ok(Command::AliasPath(name.to_string(), path.join(" ")))
+            }
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -290,6 +303,16 @@ impl Command {
                 let alias = config.remove_alias(alias)?;
                 config.save_with_warning();
                 println!("Removed alias {}", alias.cyan())
+            }
+            Command::AliasRename(old_name, new_name) => {
+                let (old_name, new_name) = config.rename_alias(old_name, new_name)?;
+                config.save_with_warning();
+                println!("Renamed alias {} to {}", old_name.cyan(), new_name.cyan())
+            }
+            Command::AliasPath(name, new_path) => {
+                let (name, new_path) = config.update_path_alias(name, new_path)?;
+                config.save_with_warning();
+                println!("Updated alias {} path to {}", name.cyan(), new_path.cyan())
             }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => match help::for_command(&command) {
