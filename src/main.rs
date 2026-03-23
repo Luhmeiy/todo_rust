@@ -1,12 +1,14 @@
 use colored::Colorize;
-use std::io::{self, Write};
+use reedline::Signal;
 
 mod command;
 mod config;
+mod editor;
 mod error;
 mod help;
 mod list;
 mod manager;
+mod prompt;
 mod task;
 
 fn main() {
@@ -30,6 +32,8 @@ fn main() {
         let _ = list_manager.add("Todo list".to_string());
     }
 
+    let mut list_exists = !list_manager.is_empty();
+    let mut editor = editor::create_editor(list_exists);
     let mut is_error = false;
 
     loop {
@@ -41,31 +45,42 @@ fn main() {
         let pointer = if is_error { ">".red() } else { ">".green() };
         is_error = false;
 
-        print!("{pointer} {} ", current_list_title.cyan());
-        io::stdout().flush().unwrap();
+        let prompt = prompt::TodoPrompt::new(format!("{pointer} {} ", current_list_title.cyan()));
 
-        let mut input = String::new();
-        if io::stdin().read_line(&mut input).is_err() {
-            eprintln!("{} Failed to read input", "Error:".red());
-            continue;
-        };
+        match editor.read_line(&prompt) {
+            Ok(Signal::Success(buffer)) => {
+                match command::Command::parse_command(&buffer, &mut list_manager) {
+                    Ok(command) => {
+                        let is_mutation = command.is_mutation();
 
-        match command::Command::parse_command(&input, &mut list_manager) {
-            Ok(command) => {
-                let is_mutation = command.is_mutation();
+                        if let Err(error) = command.execute(&mut list_manager, &mut config) {
+                            is_error = true;
+                            eprintln!("{} {error}", "Error:".red());
+                        } else if is_mutation {
+                            if let Err(error) = list_manager.save(None) {
+                                eprintln!("{} {error}", "Warning:".yellow());
+                            }
 
-                if let Err(error) = command.execute(&mut list_manager, &mut config) {
-                    is_error = true;
-                    eprintln!("{} {error}", "Error:".red());
-                } else if is_mutation {
-                    if let Err(error) = list_manager.save(None) {
-                        eprintln!("{} {error}", "Warning:".yellow());
+                            let new_list_exists = !list_manager.is_empty();
+                            if new_list_exists != list_exists {
+                                list_exists = new_list_exists;
+                                editor = editor::create_editor(list_exists);
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        is_error = true;
+                        eprintln!("{} {error}", "Error:".red())
                     }
                 }
             }
-            Err(error) => {
-                is_error = true;
-                eprintln!("{} {error}", "Error:".red())
+            Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
+                println!("Exiting...");
+                break;
+            }
+            Err(_) => {
+                eprintln!("{} Failed to read input", "Error:".red());
+                continue;
             }
         }
 

@@ -9,11 +9,11 @@ use crate::{
     manager::{ListId, ListManager},
 };
 
-const ALL_COMMANDS: &[&str] = &[
+pub const ALL_COMMANDS: &[&str] = &[
     "mklist", "lists", "switch", "rmlist", "rename", "add", "list", "update", "check", "uncheck",
     "delete", "save", "load", "alias", "help", "exit",
 ];
-const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "load", "alias", "help", "exit"];
+pub const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "load", "alias", "help", "exit"];
 
 pub enum Command {
     MakeList(String),
@@ -145,7 +145,9 @@ impl Command {
             ["save", path @ ..] => Ok(Command::Save(path.join(" "))),
             ["load"] => Err("load requires a file path.".to_string()),
             ["load", path @ ..] => Ok(Command::Load(path.join(" "))),
-            ["alias"] => Err("alias requires a subcommand (add, list, remove).".to_string()),
+            ["alias"] => {
+                Err("alias requires a subcommand (add, list, remove, rename, path).".to_string())
+            }
             ["alias", "add"] => Err("alias add requires a name and path.".to_string()),
             ["alias", "add", _alias] => Err("alias add also requires a path.".to_string()),
             ["alias", "add", alias, path @ ..] => {
