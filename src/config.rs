@@ -72,6 +72,10 @@ impl Config {
         }
     }
 
+    pub fn get_alias_names(&self) -> Vec<String> {
+        self.aliases.keys().cloned().collect()
+    }
+
     pub fn add_alias(&mut self, alias: String, path: PathBuf) -> Result<String, AliasError> {
         Self::validate_alias_name(&alias)?;
 

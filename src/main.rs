@@ -33,7 +33,7 @@ fn main() {
     }
 
     let mut list_exists = !list_manager.is_empty();
-    let mut editor = editor::create_editor(list_exists);
+    let mut editor = editor::create_editor(list_exists, config.get_alias_names());
     let mut is_error = false;
 
     loop {
@@ -52,6 +52,7 @@ fn main() {
                 match command::Command::parse_command(&buffer, &mut list_manager) {
                     Ok(command) => {
                         let is_mutation = command.is_mutation();
+                        let is_alias_mutation = command.is_alias_mutation();
 
                         if let Err(error) = command.execute(&mut list_manager, &mut config) {
                             is_error = true;
@@ -64,8 +65,11 @@ fn main() {
                             let new_list_exists = !list_manager.is_empty();
                             if new_list_exists != list_exists {
                                 list_exists = new_list_exists;
-                                editor = editor::create_editor(list_exists);
+                                editor =
+                                    editor::create_editor(list_exists, config.get_alias_names());
                             }
+                        } else if is_alias_mutation {
+                            editor = editor::create_editor(list_exists, config.get_alias_names());
                         }
                     }
                     Err(error) => {

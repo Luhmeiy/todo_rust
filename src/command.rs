@@ -351,4 +351,14 @@ impl Command {
                 | Command::Delete(_)
         )
     }
+
+    pub fn is_alias_mutation(&self) -> bool {
+        matches!(
+            self,
+            Command::AliasAdd(_, _)
+                | Command::AliasRemove(_)
+                | Command::AliasRename(_, _)
+                | Command::AliasPath(_, _)
+        )
+    }
 }
