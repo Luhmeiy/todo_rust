@@ -9,6 +9,8 @@ struct TodoCompleter {
     commands: Vec<String>,
     allowed_empty: Vec<String>,
     alias_subcommands: Vec<String>,
+    check_flags: Vec<String>,
+    delete_flags: Vec<String>,
     list_exists: bool,
     aliases: Vec<String>,
 }
@@ -24,6 +26,12 @@ impl TodoCompleter {
                 "remove".to_string(),
                 "rename".to_string(),
                 "path".to_string(),
+            ],
+            check_flags: vec!["--all".to_string()],
+            delete_flags: vec![
+                "--all".to_string(),
+                "--checked".to_string(),
+                "--unchecked".to_string(),
             ],
             list_exists,
             aliases,
@@ -81,6 +89,9 @@ impl Completer for TodoCompleter {
 
         match parts.len() {
             1 => match parts[0] {
+                "check" => TodoCompleter::complete_from(&self.check_flags, line, ""),
+                "uncheck" => TodoCompleter::complete_from(&self.check_flags, line, ""),
+                "delete" => TodoCompleter::complete_from(&self.delete_flags, line, ""),
                 "alias" => TodoCompleter::complete_from(&self.alias_subcommands, line, ""),
                 "help" => TodoCompleter::complete_from(&self.commands, line, ""),
                 "save" => TodoCompleter::complete_from(&self.aliases, line, ""),
@@ -117,9 +128,40 @@ impl Completer for TodoCompleter {
                     return vec![];
                 }
 
+                if matches!(parts[0], "check" | "uncheck")
+                    && self.check_flags.contains(&parts[1].to_string())
+                {
+                    return vec![];
+                }
+
+                if parts[0] == "delete" && self.delete_flags.contains(&parts[1].to_string()) {
+                    return vec![];
+                }
+
                 if !self.commands.contains(&parts[1].to_string()) {
                     let last_word = parts.last().copied().unwrap_or("");
                     match parts[0] {
+                        "check" => {
+                            return TodoCompleter::complete_from(
+                                &self.check_flags,
+                                line,
+                                last_word,
+                            );
+                        }
+                        "uncheck" => {
+                            return TodoCompleter::complete_from(
+                                &self.check_flags,
+                                line,
+                                last_word,
+                            );
+                        }
+                        "delete" => {
+                            return TodoCompleter::complete_from(
+                                &self.delete_flags,
+                                line,
+                                last_word,
+                            );
+                        }
                         "alias" => {
                             return TodoCompleter::complete_from(
                                 &self.alias_subcommands,
