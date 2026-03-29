@@ -39,21 +39,21 @@ pub enum Command {
     Exit,
 }
 
-impl Command {
-    fn allowed_when_empty(input: &str, list_manager: &ListManager) -> Result<(), String> {
-        if list_manager.is_empty() {
-            let first_word = input.split_whitespace().next().unwrap_or("");
+fn allowed_when_empty(input: &str, list_manager: &ListManager) -> Result<(), String> {
+    if list_manager.is_empty() {
+        let first_word = input.split_whitespace().next().unwrap_or("");
 
-            if command_info::requires_list(first_word) {
-                return Err("A list is necessary to perform this action. Create a new list with \"mklist name of your list\"".to_string());
-            }
+        if command_info::requires_list(first_word) {
+            return Err("A list is necessary to perform this action. Create a new list with \"mklist name of your list\"".to_string());
         }
-
-        Ok(())
     }
 
+    Ok(())
+}
+
+impl Command {
     pub fn parse_command(command: &str, list_manager: &ListManager) -> Result<Self, String> {
-        Self::allowed_when_empty(command, list_manager)?;
+        allowed_when_empty(command, list_manager)?;
         let split_command: Vec<&str> = command.split_whitespace().collect();
 
         match split_command.as_slice() {

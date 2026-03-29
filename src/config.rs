@@ -46,19 +46,19 @@ pub struct Config {
     aliases: HashMap<String, PathBuf>,
 }
 
+fn validate_alias_name(name: &str) -> Result<(), AliasError> {
+    if !name.starts_with("@") {
+        return Err(AliasError::NoSymbol());
+    }
+    Ok(())
+}
+
 impl Config {
     pub fn new() -> Self {
         Config {
             path: PathBuf::from("./todo_data.json"),
             aliases: HashMap::from([("@todo".to_string(), PathBuf::from("./todo_data.json"))]),
         }
-    }
-
-    fn validate_alias_name(name: &str) -> Result<(), AliasError> {
-        if !name.starts_with("@") {
-            return Err(AliasError::NoSymbol());
-        }
-        Ok(())
     }
 
     pub fn get_path(&self) -> &Path {
@@ -77,7 +77,7 @@ impl Config {
     }
 
     pub fn add_alias(&mut self, alias: String, path: PathBuf) -> Result<String, AliasError> {
-        Self::validate_alias_name(&alias)?;
+        validate_alias_name(&alias)?;
 
         if self.aliases.contains_key(&alias) {
             return Err(AliasError::AlreadyExists(alias.clone()));
@@ -105,7 +105,7 @@ impl Config {
     }
 
     pub fn remove_alias(&mut self, alias: String) -> Result<String, AliasError> {
-        Self::validate_alias_name(&alias)?;
+        validate_alias_name(&alias)?;
 
         match self.aliases.remove(&alias) {
             Some(_) => Ok(alias),
@@ -118,8 +118,8 @@ impl Config {
         old_name: String,
         new_name: String,
     ) -> Result<(String, String), AliasError> {
-        Self::validate_alias_name(&old_name)?;
-        Self::validate_alias_name(&new_name)?;
+        validate_alias_name(&old_name)?;
+        validate_alias_name(&new_name)?;
 
         let path = self
             .aliases
@@ -142,7 +142,7 @@ impl Config {
         name: String,
         new_path: String,
     ) -> Result<(String, String), AliasError> {
-        Self::validate_alias_name(&name)?;
+        validate_alias_name(&name)?;
 
         match self.aliases.get_mut(&name) {
             Some(path) => {
