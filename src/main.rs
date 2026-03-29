@@ -2,6 +2,7 @@ use colored::Colorize;
 use reedline::Signal;
 
 mod command;
+mod command_info;
 mod config;
 mod editor;
 mod error;

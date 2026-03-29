@@ -200,30 +200,3 @@ pub const EXIT: &str = r#"
 exit
   Exit the application
 "#;
-
-pub fn for_command(cmd: &str) -> Option<&'static str> {
-    match cmd {
-        "mklist" => Some(MKLIST),
-        "lists" => Some(LISTS),
-        "switch" => Some(SWITCH),
-        "rmlist" => Some(RMLIST),
-        "rename" => Some(RENAME),
-        "add" => Some(ADD),
-        "list" => Some(LIST),
-        "update" => Some(UPDATE),
-        "check" => Some(CHECK),
-        "uncheck" => Some(UNCHECK),
-        "delete" => Some(DELETE),
-        "save" => Some(SAVE),
-        "load" => Some(LOAD),
-        "alias" => Some(ALIAS),
-        "alias add" => Some(ALIAS_ADD),
-        "alias list" => Some(ALIAS_LIST),
-        "alias remove" => Some(ALIAS_REMOVE),
-        "alias rename" => Some(ALIAS_RENAME),
-        "alias path" => Some(ALIAS_PATH),
-        "help" => Some(HELP),
-        "exit" => Some(EXIT),
-        _ => None,
-    }
-}

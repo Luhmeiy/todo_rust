@@ -2,18 +2,13 @@ use colored::Colorize;
 use std::path::PathBuf;
 
 use crate::{
+    command_info,
     config::Config,
     error::AppError,
     help,
     list::TaskId,
     manager::{ListId, ListManager},
 };
-
-pub const ALL_COMMANDS: &[&str] = &[
-    "mklist", "lists", "switch", "rmlist", "rename", "add", "list", "update", "check", "uncheck",
-    "delete", "save", "load", "alias", "help", "exit",
-];
-pub const ALLOWED_EMPTY: &[&str] = &["mklist", "lists", "save", "load", "alias", "help", "exit"];
 
 pub enum Command {
     MakeList(String),
@@ -49,10 +44,8 @@ impl Command {
         if list_manager.is_empty() {
             let first_word = input.split_whitespace().next().unwrap_or("");
 
-            if ALL_COMMANDS.contains(&first_word) && !ALLOWED_EMPTY.contains(&first_word) {
-                return Err(
-                        "A list is necessary to perform this action. Create a new list with \"mklist name of your list\"".to_string(),
-                    );
+            if command_info::requires_list(first_word) {
+                return Err("A list is necessary to perform this action. Create a new list with \"mklist name of your list\"".to_string());
             }
         }
 
@@ -317,12 +310,21 @@ impl Command {
                 println!("Updated alias {} path to {}", name.cyan(), new_path.cyan())
             }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
-            Command::Help(Some(command)) => match help::for_command(&command) {
-                Some(text) => println!("{}", text.trim()),
-                None => println!(
-                    "No help available for '{command}'. Try 'help' for a list of commands."
-                ),
-            },
+            Command::Help(Some(command)) => {
+                let help_text = if command.contains(' ') {
+                    let parts: Vec<&str> = command.splitn(2, ' ').collect();
+                    command_info::get_subcommand_help(parts[0], parts[1])
+                } else {
+                    command_info::get_help(&command)
+                };
+
+                match help_text {
+                    Some(text) => println!("{}", text.trim()),
+                    None => println!(
+                        "No help available for '{command}'. Try 'help' for a list of commands."
+                    ),
+                }
+            }
             Command::Exit => {
                 println!("Exiting...");
                 std::process::exit(0);
