@@ -64,6 +64,13 @@ pub const COMMANDS: &[CommandInfo] = &[
         help: help::LIST,
     },
     CommandInfo {
+        name: "dues",
+        subcommands: &[],
+        flags: &[],
+        requires_list: true,
+        help: help::DUES,
+    },
+    CommandInfo {
         name: "update",
         subcommands: &[],
         flags: &[],

@@ -78,6 +78,13 @@ impl TaskList {
         })
     }
 
+    pub fn get_due_tasks(&self) -> Vec<&Task> {
+        self.tasks
+            .iter()
+            .filter(|task| task.get_due_date().is_some())
+            .collect()
+    }
+
     fn resolve_index(&self, query: TaskId) -> Result<usize, ListError> {
         match query {
             TaskId::Number(id) => {

@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{Days, NaiveDate};
 use colored::*;
 use serde::{Deserialize, Serialize};
 
@@ -59,6 +59,28 @@ impl Task {
         } else {
             println!("{}", display);
         }
+    }
+
+    pub fn display_due(&self) {
+        let priority = match self.priority {
+            Some(priority) => format!("({priority:?})"),
+            None => String::new(),
+        };
+
+        let due_date = self.due_date.unwrap();
+        let today = NaiveDate::from(chrono::Local::now().date_naive());
+
+        let day = if due_date < today {
+            "OVERDUE".to_string().red()
+        } else if due_date == today {
+            "TODAY".to_string().yellow()
+        } else if due_date == today + Days::new(1) {
+            "TOMORROW".to_string().yellow()
+        } else {
+            due_date.format("%d-%m-%Y").to_string().cyan()
+        };
+
+        println!("• {} {} {}", day, self.description, priority.cyan());
     }
 
     pub fn remove_due_date(&mut self) {

@@ -9,6 +9,7 @@ List Management:
 Current List Tasks:
   add <task>             Add a task
   list                   Display all tasks
+  dues                   Display tasks with due dates
   update <id> <desc>     Update a task by ID
   due <id> date          View or add due date
     --remove             Remove due date
@@ -82,6 +83,11 @@ add <task description>
 pub const LIST: &str = r#"
 list
   Display all tasks in the current list with their completion status
+"#;
+
+pub const DUES: &str = r#"
+dues
+  Display incomplete tasks with due dates, sorted by nearest date
 "#;
 
 pub const UPDATE: &str = r#"

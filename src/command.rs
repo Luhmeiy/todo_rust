@@ -21,6 +21,7 @@ pub enum Command {
     RenameCurrent(String),
     Add(String),
     List,
+    Dues,
     Update(TaskId, String),
     DueView(TaskId),
     DueRemove(TaskId),
@@ -105,6 +106,8 @@ impl Command {
             }
             ["list"] => Ok(Command::List),
             ["list", _rest @ ..] => Err("list takes no parameters.".to_string()),
+            ["dues"] => Ok(Command::Dues),
+            ["dues", _rest @ ..] => Err("dues takes no parameters.".to_string()),
             ["update"] => Err("update requires an ID and a new task description.".to_string()),
             ["update", query] => match query.parse::<usize>() {
                 Ok(id) if id > 0 => Err("update also requires a new task description.".to_string()),
@@ -253,6 +256,7 @@ impl Command {
                 let tasks = list_manager.get_current_list()?;
                 tasks.list()?
             }
+            Command::Dues => list_manager.get_due_tasks()?,
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list()?;
                 let (old_description, new_description) = tasks.update(id, task)?;

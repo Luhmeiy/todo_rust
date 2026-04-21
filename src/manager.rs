@@ -90,6 +90,26 @@ impl ListManager {
         Ok((old_title, new_title))
     }
 
+    pub fn get_due_tasks(&mut self) -> Result<(), ManagerError> {
+        if self.lists.is_empty() {
+            return Err(ManagerError::Empty);
+        }
+
+        let mut dues = Vec::new();
+
+        for list in self.lists.iter() {
+            dues.append(&mut list.get_due_tasks());
+        }
+
+        dues.sort_by(|a, b| a.get_due_date().unwrap().cmp(&b.get_due_date().unwrap()));
+
+        for due in dues {
+            due.display_due()
+        }
+
+        Ok(())
+    }
+
     pub fn add(&mut self, title: String) -> Result<&TaskList, ManagerError> {
         self.lists.push(TaskList::new(title));
         Ok(self.lists.last().unwrap())
