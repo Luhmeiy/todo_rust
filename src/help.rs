@@ -75,9 +75,16 @@ rename [id] <new title>
 "#;
 
 pub const ADD: &str = r#"
-add <task description>
-  Add a new task to the current list
-  Example: add Buy milk
+add <task description> [--priority <level> | -p <level>] [--due <date> | -d <date>]
+  Add a new task to the current list with optional priority and due date
+  • --priority <level>, -p <level>   Priority level (low, medium, high)
+  • --due <date>, -d <date>          Due date (DD-MM-YYYY)
+  Examples:
+    add Buy milk
+    add "Finish report" -p high
+    add "Call mom" --due 25-12-2026
+    add "Project deadline" -p high -d 25-12-2026
+    add "Meeting" --due 01-01-2027 -p medium
 "#;
 
 pub const LIST: &str = r#"

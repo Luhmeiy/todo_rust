@@ -19,7 +19,7 @@ pub enum Command {
     RemoveList(ListId),
     Rename(usize, String),
     RenameCurrent(String),
-    Add(String),
+    Add(String, Option<NaiveDate>, Option<Priority>),
     List,
     Dues,
     Update(TaskId, String),
@@ -28,7 +28,7 @@ pub enum Command {
     DueAdd(TaskId, NaiveDate),
     PriorityView(TaskId),
     PriorityRemove(TaskId),
-    PriorityAdd(TaskId, String),
+    PriorityAdd(TaskId, Priority),
     CheckAll,
     Check(TaskId),
     UncheckAll,
@@ -58,6 +58,56 @@ fn allowed_when_empty(input: &str, list_manager: &ListManager) -> Result<(), Str
     }
 
     Ok(())
+}
+
+fn parse_add_flags(args: &[&str]) -> Result<(String, Option<NaiveDate>, Option<Priority>), String> {
+    let mut task_parts = Vec::new();
+    let mut due_date = None;
+    let mut priority = None;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i] {
+            "--due" | "-d" => {
+                if i + 1 >= args.len() {
+                    return Err("Missing date after --due/-d flag".to_string());
+                }
+
+                let date_str = args[i + 1];
+                let naive_date = NaiveDate::parse_from_str(date_str, "%d-%m-%Y")
+                    .map_err(|_| "Invalid date format. Use DD-MM-YYYY".to_string())?;
+
+                due_date = Some(naive_date);
+                i += 2;
+            }
+            "--priority" | "-p" => {
+                if i + 1 >= args.len() {
+                    return Err("Missing priority level after --priority/-p flag".to_string());
+                }
+
+                let priority_str = args[i + 1].to_lowercase();
+                priority = match priority_str.as_str() {
+                    "low" => Some(Priority::Low),
+                    "medium" => Some(Priority::Medium),
+                    "high" => Some(Priority::High),
+                    _ => return Err("Invalid priority. Use low, medium, or high.".to_string()),
+                };
+
+                i += 2;
+            }
+            arg => {
+                task_parts.push(arg.to_string());
+                i += 1;
+            }
+        }
+    }
+
+    let task = task_parts.join(" ");
+    if task.is_empty() {
+        return Err("add requires a task description.".to_string());
+    }
+
+    Ok((task, due_date, priority))
 }
 
 impl Command {
@@ -99,10 +149,9 @@ impl Command {
                     }
                 }
             },
-            ["add"] => Err("add requires a task description.".to_string()),
             ["add", rest @ ..] => {
-                let task = rest.join(" ");
-                Ok(Command::Add(task))
+                let (task, due_date, priority) = parse_add_flags(rest)?;
+                Ok(Command::Add(task, due_date, priority))
             }
             ["list"] => Ok(Command::List),
             ["list", _rest @ ..] => Err("list takes no parameters.".to_string()),
@@ -154,10 +203,20 @@ impl Command {
                 Err(_) => Err("Invalid ID.".to_string()),
             },
             ["priority", query, priority_str] => match query.parse::<usize>() {
-                Ok(id) if id > 0 => Ok(Command::PriorityAdd(
-                    TaskId::Number(id - 1),
-                    priority_str.to_string(),
-                )),
+                Ok(id) if id > 0 => {
+                    let priority = match priority_str.to_lowercase().as_str() {
+                        "low" => Priority::Low,
+                        "medium" => Priority::Medium,
+                        "high" => Priority::High,
+                        _ => {
+                            return Err("Invalid priority. Use low, medium, or high."
+                                .to_string()
+                                .into());
+                        }
+                    };
+
+                    Ok(Command::PriorityAdd(TaskId::Number(id - 1), priority))
+                }
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Err("Invalid ID.".to_string()),
             },
@@ -247,9 +306,9 @@ impl Command {
                 let (old_title, new_title) = tasks.rename(title)?;
                 println!("Renamed list {} to {}", old_title.cyan(), new_title.cyan())
             }
-            Command::Add(task) => {
+            Command::Add(task, due_date, priority) => {
                 let tasks = list_manager.get_current_list()?;
-                let task = tasks.add(task)?;
+                let task = tasks.add(task, due_date, priority)?;
                 println!("Added task {}", task.get_description().cyan())
             }
             Command::List => {
@@ -311,20 +370,8 @@ impl Command {
                 let description = tasks.remove_priority(id)?;
                 println!("Removed priority for task {}", description.cyan())
             }
-            Command::PriorityAdd(id, priority_str) => {
+            Command::PriorityAdd(id, priority) => {
                 let tasks = list_manager.get_current_list()?;
-
-                let priority = match priority_str.to_lowercase().as_str() {
-                    "low" => Priority::Low,
-                    "medium" => Priority::Medium,
-                    "high" => Priority::High,
-                    _ => {
-                        return Err("Invalid priority. Use low, medium, or high."
-                            .to_string()
-                            .into());
-                    }
-                };
-
                 let description = tasks.add_priority(id, priority)?;
                 println!("Set priority for task {}", description.cyan())
             }
@@ -454,7 +501,7 @@ impl Command {
                 | Command::RemoveList(_)
                 | Command::Rename(_, _)
                 | Command::RenameCurrent(_)
-                | Command::Add(_)
+                | Command::Add(_, _, _)
                 | Command::Update(_, _)
                 | Command::DueRemove(_)
                 | Command::DueAdd(_, _)

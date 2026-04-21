@@ -19,13 +19,17 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(description: String) -> Self {
+    pub fn new(
+        description: String,
+        due_date: Option<NaiveDate>,
+        priority: Option<Priority>,
+    ) -> Self {
         Self {
             description,
             checked: false,
             created_at: NaiveDate::from(chrono::Local::now().date_naive()),
-            due_date: None,
-            priority: None,
+            due_date,
+            priority,
         }
     }
 

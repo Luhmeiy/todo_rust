@@ -65,8 +65,13 @@ impl TaskList {
         Ok((old_title, &self.title))
     }
 
-    pub fn add(&mut self, description: String) -> Result<&Task, ListError> {
-        self.tasks.push(Task::new(description));
+    pub fn add(
+        &mut self,
+        description: String,
+        due_date: Option<NaiveDate>,
+        priority: Option<Priority>,
+    ) -> Result<&Task, ListError> {
+        self.tasks.push(Task::new(description, due_date, priority));
         Ok(self.tasks.last().unwrap())
     }
 
