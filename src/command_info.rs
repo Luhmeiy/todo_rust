@@ -71,6 +71,13 @@ pub const COMMANDS: &[CommandInfo] = &[
         help: help::UPDATE,
     },
     CommandInfo {
+        name: "due",
+        subcommands: &[],
+        flags: &["--remove"],
+        requires_list: true,
+        help: help::DUE,
+    },
+    CommandInfo {
         name: "check",
         subcommands: &[],
         flags: &["--all"],

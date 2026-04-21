@@ -1,4 +1,5 @@
 use crate::task::Task;
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq)]
@@ -112,6 +113,30 @@ impl TaskList {
         let id = self.resolve_index(query)?;
         let (old_description, new_description) = self.tasks[id].update(description);
         Ok((old_description, new_description))
+    }
+
+    pub fn get_due_date(&self, query: TaskId) -> Result<(&str, Option<NaiveDate>), ListError> {
+        let id = self.resolve_index(query)?;
+        let task = &self.tasks[id];
+
+        let description = task.get_description();
+        let due_date = task.get_due_date();
+
+        Ok((description, due_date))
+    }
+
+    pub fn remove_due_date(&mut self, query: TaskId) -> Result<&str, ListError> {
+        let id = self.resolve_index(query)?;
+        let task = &mut self.tasks[id];
+        task.remove_due_date();
+        Ok(task.get_description())
+    }
+
+    pub fn add_due_date(&mut self, query: TaskId, date: NaiveDate) -> Result<&str, ListError> {
+        let id = self.resolve_index(query)?;
+        let task = &mut self.tasks[id];
+        task.add_due_date(date);
+        Ok(task.get_description())
     }
 
     pub fn check_all(&mut self) -> Result<(), ListError> {

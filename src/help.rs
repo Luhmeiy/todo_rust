@@ -86,6 +86,12 @@ update <id> <new description>
   Example: update 2 Buy organic milk
 "#;
 
+pub const DUE: &str = r#"
+due <id> <due date>
+  Add a due date to an existing task by ID
+  Example: due 5 21-04-2026
+"#;
+
 pub const CHECK: &str = r#"
 check [--all | <id|description>]
   Mark task(s) as done
@@ -143,14 +149,14 @@ load <@alias|path>
 pub const ALIAS: &str = r#"
 alias <subcommand>
   Manage aliases for file paths
-  
+
   Subcommands:
     add <@name> <path>   Create an alias
     list                 List all aliases
     remove <@name>       Remove an alias
     rename <@old> <@new> Rename an alias
     path <@name> <path>  Update alias path
-  
+
   Examples:
     alias add @work ./work.json
     alias list

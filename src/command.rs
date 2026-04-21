@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use colored::Colorize;
 use std::path::PathBuf;
 
@@ -20,6 +21,9 @@ pub enum Command {
     Add(String),
     List,
     Update(TaskId, String),
+    DueView(TaskId),
+    DueRemove(TaskId),
+    DueAdd(TaskId, NaiveDate),
     CheckAll,
     Check(TaskId),
     UncheckAll,
@@ -107,6 +111,26 @@ impl Command {
                 Ok(id) if id > 0 => {
                     let task = rest.join(" ");
                     Ok(Command::Update(TaskId::Number(id - 1), task))
+                }
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["due"] => Err("due requires an ID and a due date.".to_string()),
+            ["due", query] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::DueView(TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["due", query, "--remove"] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::DueRemove(TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["due", query, date_str] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => {
+                    let naive_date = NaiveDate::parse_from_str(date_str, "%d-%m-%Y")
+                        .map_err(|_| "Invalid date format. Use DD-MM-YYYY".to_string())?;
+                    Ok(Command::DueAdd(TaskId::Number(id - 1), naive_date))
                 }
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Err("Invalid ID.".to_string()),
@@ -214,6 +238,33 @@ impl Command {
                     old_description.cyan(),
                     new_description.cyan()
                 )
+            }
+            Command::DueView(id) => {
+                let tasks = list_manager.get_current_list()?;
+                let (description, due_date) = tasks.get_due_date(id)?;
+
+                let result = match due_date {
+                    Some(due_date) => {
+                        format!(
+                            "[{}] {}",
+                            description.cyan(),
+                            due_date.format("%d-%m-%Y").to_string().cyan()
+                        )
+                    }
+                    None => format!("No due date for task {}", description.cyan()),
+                };
+
+                println!("{}", result)
+            }
+            Command::DueRemove(id) => {
+                let tasks = list_manager.get_current_list()?;
+                let description = tasks.remove_due_date(id)?;
+                println!("Removed due date for task {}", description.cyan())
+            }
+            Command::DueAdd(id, date) => {
+                let tasks = list_manager.get_current_list()?;
+                let description = tasks.add_due_date(id, date)?;
+                println!("Set due date for task {}", description.cyan())
             }
             Command::CheckAll => {
                 let tasks = list_manager.get_current_list()?;
@@ -343,6 +394,8 @@ impl Command {
                 | Command::RenameCurrent(_)
                 | Command::Add(_)
                 | Command::Update(_, _)
+                | Command::DueRemove(_)
+                | Command::DueAdd(_, _)
                 | Command::CheckAll
                 | Command::Check(_)
                 | Command::UncheckAll
