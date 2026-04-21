@@ -1,4 +1,4 @@
-use crate::task::Task;
+use crate::task::{Priority, Task};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
@@ -136,6 +136,30 @@ impl TaskList {
         let id = self.resolve_index(query)?;
         let task = &mut self.tasks[id];
         task.add_due_date(date);
+        Ok(task.get_description())
+    }
+
+    pub fn get_priority(&self, query: TaskId) -> Result<(&str, Option<Priority>), ListError> {
+        let id = self.resolve_index(query)?;
+        let task = &self.tasks[id];
+
+        let description = task.get_description();
+        let priority = task.get_priority();
+
+        Ok((description, priority))
+    }
+
+    pub fn remove_priority(&mut self, query: TaskId) -> Result<&str, ListError> {
+        let id = self.resolve_index(query)?;
+        let task = &mut self.tasks[id];
+        task.remove_priority();
+        Ok(task.get_description())
+    }
+
+    pub fn add_priority(&mut self, query: TaskId, priority: Priority) -> Result<&str, ListError> {
+        let id = self.resolve_index(query)?;
+        let task = &mut self.tasks[id];
+        task.add_priority(priority);
         Ok(task.get_description())
     }
 

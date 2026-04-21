@@ -10,6 +10,10 @@ Current List Tasks:
   add <task>             Add a task
   list                   Display all tasks
   update <id> <desc>     Update a task by ID
+  due <id> date          View or add due date
+    --remove             Remove due date
+  priority <id> level    View or add priority
+    --remove             Remove priority
   check <id|desc>        Mark done
     --all                Mark all tasks as done
   uncheck <id|desc>      Mark not done
@@ -87,9 +91,25 @@ update <id> <new description>
 "#;
 
 pub const DUE: &str = r#"
-due <id> <due date>
-  Add a due date to an existing task by ID
-  Example: due 5 21-04-2026
+due <id> [<due date> | --remove]
+  View, add, or remove a due date from a task by ID
+  • <due date>           Add due date (DD-MM-YYYY)
+  • --remove             Remove due date
+  Examples:
+    due 5                # View due date for task 5
+    due 5 21-04-2026     # Add due date to task 5
+    due 5 --remove       # Remove due date from task 5
+"#;
+
+pub const PRIORITY: &str = r#"
+priority <id> [<level> | --remove]
+  View, add, or remove priority from a task by ID
+  • <level>              Priority level (low, medium, high)
+  • --remove             Remove priority
+  Examples:
+    priority 5           # View priority for task 5
+    priority 5 high      # Set priority to high for task 5
+    priority 5 --remove  # Remove priority from task 5
 "#;
 
 pub const CHECK: &str = r#"

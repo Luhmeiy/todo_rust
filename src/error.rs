@@ -9,6 +9,7 @@ pub enum AppError {
     AliasError(AliasError),
     ListError(ListError),
     ManagerError(ManagerError),
+    String(String),
 }
 
 impl From<ConfigError> for AppError {
@@ -35,6 +36,18 @@ impl From<ManagerError> for AppError {
     }
 }
 
+impl From<String> for AppError {
+    fn from(e: String) -> Self {
+        AppError::String(e)
+    }
+}
+
+impl From<&str> for AppError {
+    fn from(e: &str) -> Self {
+        AppError::String(e.to_string())
+    }
+}
+
 impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -42,6 +55,7 @@ impl std::fmt::Display for AppError {
             AppError::AliasError(e) => e.fmt(f),
             AppError::ListError(e) => e.fmt(f),
             AppError::ManagerError(e) => e.fmt(f),
+            AppError::String(e) => write!(f, "{}", e),
         }
     }
 }

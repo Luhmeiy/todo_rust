@@ -9,6 +9,7 @@ use crate::{
     help,
     list::TaskId,
     manager::{ListId, ListManager},
+    task::Priority,
 };
 
 pub enum Command {
@@ -24,6 +25,9 @@ pub enum Command {
     DueView(TaskId),
     DueRemove(TaskId),
     DueAdd(TaskId, NaiveDate),
+    PriorityView(TaskId),
+    PriorityRemove(TaskId),
+    PriorityAdd(TaskId, String),
     CheckAll,
     Check(TaskId),
     UncheckAll,
@@ -132,6 +136,25 @@ impl Command {
                         .map_err(|_| "Invalid date format. Use DD-MM-YYYY".to_string())?;
                     Ok(Command::DueAdd(TaskId::Number(id - 1), naive_date))
                 }
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["priority"] => Err("priority requires an ID and a priority level.".to_string()),
+            ["priority", query] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::PriorityView(TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["priority", query, "--remove"] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::PriorityRemove(TaskId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["priority", query, priority_str] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::PriorityAdd(
+                    TaskId::Number(id - 1),
+                    priority_str.to_string(),
+                )),
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Err("Invalid ID.".to_string()),
             },
@@ -266,6 +289,41 @@ impl Command {
                 let description = tasks.add_due_date(id, date)?;
                 println!("Set due date for task {}", description.cyan())
             }
+            Command::PriorityView(id) => {
+                let tasks = list_manager.get_current_list()?;
+                let (description, priority) = tasks.get_priority(id)?;
+
+                let result = match priority {
+                    Some(priority) => {
+                        format!("[{}] {:?}", description.cyan(), priority)
+                    }
+                    None => format!("No priority for task {}", description.cyan()),
+                };
+
+                println!("{}", result)
+            }
+            Command::PriorityRemove(id) => {
+                let tasks = list_manager.get_current_list()?;
+                let description = tasks.remove_priority(id)?;
+                println!("Removed priority for task {}", description.cyan())
+            }
+            Command::PriorityAdd(id, priority_str) => {
+                let tasks = list_manager.get_current_list()?;
+
+                let priority = match priority_str.to_lowercase().as_str() {
+                    "low" => Priority::Low,
+                    "medium" => Priority::Medium,
+                    "high" => Priority::High,
+                    _ => {
+                        return Err("Invalid priority. Use low, medium, or high."
+                            .to_string()
+                            .into());
+                    }
+                };
+
+                let description = tasks.add_priority(id, priority)?;
+                println!("Set priority for task {}", description.cyan())
+            }
             Command::CheckAll => {
                 let tasks = list_manager.get_current_list()?;
                 tasks.check_all()?;
@@ -396,6 +454,8 @@ impl Command {
                 | Command::Update(_, _)
                 | Command::DueRemove(_)
                 | Command::DueAdd(_, _)
+                | Command::PriorityRemove(_)
+                | Command::PriorityAdd(_, _)
                 | Command::CheckAll
                 | Command::Check(_)
                 | Command::UncheckAll
