@@ -184,6 +184,13 @@ pub const COMMANDS: &[CommandInfo] = &[
         requires_list: false,
         help: help::EXIT,
     },
+    CommandInfo {
+        name: "undo",
+        subcommands: &[],
+        flags: &[],
+        requires_list: false,
+        help: help::UNDO,
+    },
 ];
 
 pub fn get(name: &str) -> Option<&'static CommandInfo> {

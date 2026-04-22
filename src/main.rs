@@ -7,6 +7,7 @@ mod config;
 mod editor;
 mod error;
 mod help;
+mod history;
 mod list;
 mod manager;
 mod prompt;
@@ -54,6 +55,10 @@ fn main() {
                     Ok(command) => {
                         let is_mutation = command.is_mutation();
                         let is_alias_mutation = command.is_alias_mutation();
+
+                        if is_mutation {
+                            list_manager.push_history();
+                        }
 
                         if let Err(error) = command.execute(&mut list_manager, &mut config) {
                             is_error = true;

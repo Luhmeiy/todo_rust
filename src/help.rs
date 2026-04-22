@@ -34,6 +34,7 @@ Other:
     remove <@name>       Remove an alias
     rename <@old> <@new> Rename an alias
     path <@name> <path>  Update alias path
+  undo                   Undo last command
   help [command]         Display all commands or details for a specific command
   exit                   Exit the program
 "#;
@@ -265,4 +266,10 @@ help [command]
 pub const EXIT: &str = r#"
 exit
   Exit the application
+"#;
+
+pub const UNDO: &str = r#"
+undo
+  Undo the last command
+  Example: undo
 "#;

@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::history::History;
 use crate::list::{ListError, TaskList};
 use colored::*;
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,7 @@ pub enum ManagerError {
     IoError(std::io::Error),
     JsonError(serde_json::Error),
     InvalidFileFormat,
+    NoHistory,
     ListError(ListError),
 }
 
@@ -51,6 +53,7 @@ impl std::fmt::Display for ManagerError {
             ManagerError::InvalidFileFormat => {
                 write!(f, "Invalid file format. Use .json extension.")
             }
+            ManagerError::NoHistory => write!(f, "Nothing to undo."),
             ManagerError::ListError(e) => e.fmt(f),
         }
     }
@@ -61,6 +64,8 @@ pub struct ListManager {
     lists: Vec<TaskList>,
     current_list: usize,
     path: PathBuf,
+    #[serde(skip)]
+    history: Option<History>,
 }
 
 impl ListManager {
@@ -69,6 +74,7 @@ impl ListManager {
             lists: Vec::new(),
             current_list: 0,
             path: PathBuf::from("./todo_data.json"),
+            history: None,
         }
     }
 
@@ -237,5 +243,28 @@ impl ListManager {
 
         let content = fs::read_to_string(path).map_err(ManagerError::IoError)?;
         serde_json::from_str(&content).map_err(ManagerError::JsonError)
+    }
+
+    pub fn push_history(&mut self) {
+        if self.lists.is_empty() {
+            return;
+        }
+
+        if let Ok(json) = serde_json::to_string(self) {
+            self.history = Some(History::new(json));
+        }
+    }
+
+    pub fn undo(&mut self) -> Result<(), ManagerError> {
+        let state = self.history.take().ok_or(ManagerError::NoHistory)?.pop();
+
+        let restored: ListManager =
+            serde_json::from_str(&state).map_err(ManagerError::JsonError)?;
+
+        self.lists = restored.lists;
+        self.current_list = restored.current_list;
+        self.path = restored.path;
+
+        Ok(())
     }
 }

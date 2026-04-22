@@ -48,6 +48,7 @@ pub enum Command {
     AliasPath(String, String),
     ConfigDateFormat(String),
     ConfigList,
+    Undo,
     Help(Option<String>),
     Exit,
 }
@@ -293,6 +294,8 @@ impl Command {
             }
             ["config", "list"] => Ok(Command::ConfigList),
             ["config"] => Err("config requires a subcommand (date-format, list).".to_string()),
+            ["undo"] => Ok(Command::Undo),
+            ["undo", _rest @ ..] => Err("undo takes no parameters.".to_string()),
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -500,6 +503,11 @@ impl Command {
                 println!("Date format is now '{}'", date_format);
             }
             Command::ConfigList => config.list_settings(),
+            Command::Undo => {
+                list_manager.undo()?;
+                list_manager.save(None)?;
+                println!("Undone.")
+            }
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => {
                 let help_text = if command.contains(' ') {
