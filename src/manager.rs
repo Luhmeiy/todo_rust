@@ -1,4 +1,4 @@
-use crate::list::TaskList;
+use crate::list::{ListError, TaskList};
 use colored::*;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -18,6 +18,13 @@ pub enum ManagerError {
     IoError(std::io::Error),
     JsonError(serde_json::Error),
     InvalidFileFormat,
+    ListError(ListError),
+}
+
+impl From<ListError> for ManagerError {
+    fn from(e: ListError) -> Self {
+        ManagerError::ListError(e)
+    }
 }
 
 impl std::fmt::Display for ManagerError {
@@ -43,6 +50,7 @@ impl std::fmt::Display for ManagerError {
             ManagerError::InvalidFileFormat => {
                 write!(f, "Invalid file format. Use .json extension.")
             }
+            ManagerError::ListError(e) => e.fmt(f),
         }
     }
 }
@@ -156,6 +164,12 @@ impl ListManager {
             return Err(ManagerError::EmptyLists);
         }
 
+        Ok(())
+    }
+
+    pub fn list_from(&mut self, query: ListId) -> Result<(), ManagerError> {
+        let id = self.resolve_index(query)?;
+        self.lists[id].list()?;
         Ok(())
     }
 

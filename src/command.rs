@@ -22,6 +22,7 @@ pub enum Command {
     Add(String, Option<NaiveDate>, Option<Priority>),
     List,
     ListAll,
+    ListFrom(ListId),
     Dues,
     Update(TaskId, String),
     DueView(TaskId),
@@ -156,7 +157,11 @@ impl Command {
             }
             ["list"] => Ok(Command::List),
             ["list", "--all"] => Ok(Command::ListAll),
-            ["list", _rest @ ..] => Err("list takes no parameters.".to_string()),
+            ["list", query @ ..] => match query[0].parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::ListFrom(ListId::Number(id - 1))),
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Ok(Command::ListFrom(ListId::String(query.join(" ")))),
+            },
             ["dues"] => Ok(Command::Dues),
             ["dues", _rest @ ..] => Err("dues takes no parameters.".to_string()),
             ["update"] => Err("update requires an ID and a new task description.".to_string()),
@@ -318,6 +323,7 @@ impl Command {
                 tasks.list()?
             }
             Command::ListAll => list_manager.list_tasks()?,
+            Command::ListFrom(query) => list_manager.list_from(query)?,
             Command::Dues => list_manager.get_due_tasks()?,
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list()?;
