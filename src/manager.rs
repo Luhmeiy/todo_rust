@@ -12,6 +12,7 @@ pub enum ListId {
 
 pub enum ManagerError {
     Empty,
+    EmptyLists,
     NotFound,
     MultipleMatches(Vec<(usize, String)>),
     IoError(std::io::Error),
@@ -26,6 +27,7 @@ impl std::fmt::Display for ManagerError {
                 f,
                 "No lists found. Create a new list with \"mklist name of your list\""
             ),
+            ManagerError::EmptyLists => write!(f, "No tasks found."),
             ManagerError::NotFound => write!(f, "List not found."),
             ManagerError::MultipleMatches(indices) => {
                 writeln!(f, "Multiple matches. Please use the list number.")?;
@@ -101,6 +103,10 @@ impl ListManager {
             dues.append(&mut list.get_due_tasks());
         }
 
+        if dues.is_empty() {
+            return Err(ManagerError::EmptyLists);
+        }
+
         dues.sort_by(|a, b| a.get_due_date().unwrap().cmp(&b.get_due_date().unwrap()));
 
         for due in dues {
@@ -128,6 +134,26 @@ impl ListManager {
             };
 
             println!("{}. {} {current}", index + 1, list.get_title())
+        }
+
+        Ok(())
+    }
+
+    pub fn list_tasks(&self) -> Result<(), ManagerError> {
+        if self.lists.is_empty() {
+            return Err(ManagerError::Empty);
+        }
+
+        let mut has_tasks = false;
+        for list in self.lists.iter() {
+            if list.has_tasks() {
+                has_tasks = true;
+                list.list_without_verify();
+            }
+        }
+
+        if !has_tasks {
+            return Err(ManagerError::EmptyLists);
         }
 
         Ok(())

@@ -83,6 +83,16 @@ impl TaskList {
         })
     }
 
+    pub fn has_tasks(&self) -> bool {
+        !self.tasks.is_empty()
+    }
+
+    pub fn list_without_verify(&self) {
+        for task in self.tasks.iter() {
+            task.display();
+        }
+    }
+
     pub fn get_due_tasks(&self) -> Vec<&Task> {
         self.tasks
             .iter()

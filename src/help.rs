@@ -9,6 +9,7 @@ List Management:
 Current List Tasks:
   add <task>             Add a task
   list                   Display all tasks
+    --all                Display all tasks from all lists
   dues                   Display tasks with due dates
   update <id> <desc>     Update a task by ID
   due <id> date          View or add due date
@@ -88,8 +89,9 @@ add <task description> [--priority <level> | -p <level>] [--due <date> | -d <dat
 "#;
 
 pub const LIST: &str = r#"
-list
+list [--all]
   Display all tasks in the current list with their completion status
+  • --all                Display all tasks from all lists
 "#;
 
 pub const DUES: &str = r#"

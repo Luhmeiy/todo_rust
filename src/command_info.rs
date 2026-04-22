@@ -59,7 +59,7 @@ pub const COMMANDS: &[CommandInfo] = &[
     CommandInfo {
         name: "list",
         subcommands: &[],
-        flags: &[],
+        flags: &["--all"],
         requires_list: true,
         help: help::LIST,
     },

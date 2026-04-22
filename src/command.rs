@@ -21,6 +21,7 @@ pub enum Command {
     RenameCurrent(String),
     Add(String, Option<NaiveDate>, Option<Priority>),
     List,
+    ListAll,
     Dues,
     Update(TaskId, String),
     DueView(TaskId),
@@ -154,6 +155,7 @@ impl Command {
                 Ok(Command::Add(task, due_date, priority))
             }
             ["list"] => Ok(Command::List),
+            ["list", "--all"] => Ok(Command::ListAll),
             ["list", _rest @ ..] => Err("list takes no parameters.".to_string()),
             ["dues"] => Ok(Command::Dues),
             ["dues", _rest @ ..] => Err("dues takes no parameters.".to_string()),
@@ -315,6 +317,7 @@ impl Command {
                 let tasks = list_manager.get_current_list()?;
                 tasks.list()?
             }
+            Command::ListAll => list_manager.list_tasks()?,
             Command::Dues => list_manager.get_due_tasks()?,
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list()?;
