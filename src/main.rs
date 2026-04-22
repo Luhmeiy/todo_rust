@@ -50,7 +50,7 @@ fn main() {
 
         match editor.read_line(&prompt) {
             Ok(Signal::Success(buffer)) => {
-                match command::Command::parse_command(&buffer, &mut list_manager) {
+                match command::Command::parse_command(&buffer, &mut list_manager, &config) {
                     Ok(command) => {
                         let is_mutation = command.is_mutation();
                         let is_alias_mutation = command.is_alias_mutation();

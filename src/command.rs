@@ -46,6 +46,8 @@ pub enum Command {
     AliasRemove(String),
     AliasRename(String, String),
     AliasPath(String, String),
+    ConfigDateFormat(String),
+    ConfigList,
     Help(Option<String>),
     Exit,
 }
@@ -62,11 +64,15 @@ fn allowed_when_empty(input: &str, list_manager: &ListManager) -> Result<(), Str
     Ok(())
 }
 
-fn parse_add_flags(args: &[&str]) -> Result<(String, Option<NaiveDate>, Option<Priority>), String> {
+fn parse_add_flags(
+    args: &[&str],
+    config: &Config,
+) -> Result<(String, Option<NaiveDate>, Option<Priority>), String> {
     let mut task_parts = Vec::new();
     let mut due_date = None;
     let mut priority = None;
     let mut i = 0;
+    let date_format = config.get_date_format();
 
     while i < args.len() {
         match args[i] {
@@ -76,8 +82,8 @@ fn parse_add_flags(args: &[&str]) -> Result<(String, Option<NaiveDate>, Option<P
                 }
 
                 let date_str = args[i + 1];
-                let naive_date = NaiveDate::parse_from_str(date_str, "%d-%m-%Y")
-                    .map_err(|_| "Invalid date format. Use DD-MM-YYYY".to_string())?;
+                let naive_date = NaiveDate::parse_from_str(date_str, date_format)
+                    .map_err(|_| format!("Invalid date format. Use {}", date_format))?;
 
                 due_date = Some(naive_date);
                 i += 2;
@@ -113,7 +119,11 @@ fn parse_add_flags(args: &[&str]) -> Result<(String, Option<NaiveDate>, Option<P
 }
 
 impl Command {
-    pub fn parse_command(command: &str, list_manager: &ListManager) -> Result<Self, String> {
+    pub fn parse_command(
+        command: &str,
+        list_manager: &ListManager,
+        config: &Config,
+    ) -> Result<Self, String> {
         allowed_when_empty(command, list_manager)?;
         let split_command: Vec<&str> = command.split_whitespace().collect();
 
@@ -152,7 +162,7 @@ impl Command {
                 }
             },
             ["add", rest @ ..] => {
-                let (task, due_date, priority) = parse_add_flags(rest)?;
+                let (task, due_date, priority) = parse_add_flags(rest, config)?;
                 Ok(Command::Add(task, due_date, priority))
             }
             ["list"] => Ok(Command::List),
@@ -191,8 +201,9 @@ impl Command {
             },
             ["due", query, date_str] => match query.parse::<usize>() {
                 Ok(id) if id > 0 => {
-                    let naive_date = NaiveDate::parse_from_str(date_str, "%d-%m-%Y")
-                        .map_err(|_| "Invalid date format. Use DD-MM-YYYY".to_string())?;
+                    let date_format = config.get_date_format();
+                    let naive_date = NaiveDate::parse_from_str(date_str, date_format)
+                        .map_err(|_| format!("Invalid date format. Use {date_format}"))?;
                     Ok(Command::DueAdd(TaskId::Number(id - 1), naive_date))
                 }
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
@@ -277,6 +288,11 @@ impl Command {
             ["alias", "path", name, path @ ..] => {
                 Ok(Command::AliasPath(name.to_string(), path.join(" ")))
             }
+            ["config", "date-format", date_format] => {
+                Ok(Command::ConfigDateFormat(date_format.to_string()))
+            }
+            ["config", "list"] => Ok(Command::ConfigList),
+            ["config"] => Err("config requires a subcommand (date-format, list).".to_string()),
             ["help"] => Ok(Command::Help(None)),
             ["help", command @ ..] => Ok(Command::Help(Some(command.join(" ")))),
             ["exit", _rest @ ..] => Ok(Command::Exit),
@@ -324,7 +340,7 @@ impl Command {
             }
             Command::ListAll => list_manager.list_tasks()?,
             Command::ListFrom(query) => list_manager.list_from(query)?,
-            Command::Dues => list_manager.get_due_tasks()?,
+            Command::Dues => list_manager.get_due_tasks(config)?,
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list()?;
                 let (old_description, new_description) = tasks.update(id, task)?;
@@ -343,7 +359,7 @@ impl Command {
                         format!(
                             "[{}] {}",
                             description.cyan(),
-                            due_date.format("%d-%m-%Y").to_string().cyan()
+                            due_date.format(config.get_date_format()).to_string().cyan()
                         )
                     }
                     None => format!("No due date for task {}", description.cyan()),
@@ -478,6 +494,12 @@ impl Command {
                 config.save_with_warning();
                 println!("Updated alias {} path to {}", name.cyan(), new_path.cyan())
             }
+            Command::ConfigDateFormat(date_format) => {
+                let date_format = config.set_date_format(date_format)?;
+                config.save_with_warning();
+                println!("Date format is now '{}'", date_format);
+            }
+            Command::ConfigList => config.list_settings(),
             Command::Help(None) => println!("{}", help::GENERAL.trim()),
             Command::Help(Some(command)) => {
                 let help_text = if command.contains(' ') {

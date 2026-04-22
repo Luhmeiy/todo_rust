@@ -89,9 +89,15 @@ add <task description> [--priority <level> | -p <level>] [--due <date> | -d <dat
 "#;
 
 pub const LIST: &str = r#"
-list [--all]
-  Display all tasks in the current list with their completion status
-  • --all                Display all tasks from all lists
+list [--all | <id|title>]
+  Display tasks in a list with their completion status
+  • --all                Display tasks from all lists
+  • <id|title>           Display tasks from a specific list by ID or name
+  Examples:
+    list                 # Display current list tasks
+    list --all           # Display tasks from all lists
+    list 2               # Display tasks from list ID 2
+    list work            # Display tasks from list named "work"
 "#;
 
 pub const DUES: &str = r#"
@@ -108,7 +114,7 @@ update <id> <new description>
 pub const DUE: &str = r#"
 due <id> [<due date> | --remove]
   View, add, or remove a due date from a task by ID
-  • <due date>           Add due date (DD-MM-YYYY)
+  • <due date>           Add due date (format based on config date-format)
   • --remove             Remove due date
   Examples:
     due 5                # View due date for task 5
@@ -227,6 +233,25 @@ pub const ALIAS_PATH: &str = r#"
 alias path <@name> <path>
   Update the path an alias points to
   Example: alias path @work ./new_work.json
+"#;
+
+pub const CONFIG: &str = r#"
+config <subcommand> [args]
+  Manage application configuration
+  Subcommands:
+    date-format          Change the date format
+    list                 List current settings
+"#;
+
+pub const CONFIG_DATE_FORMAT: &str = r#"
+config date-format <format>
+  Change the date format used throughout the app
+  Example: config date-format %d/%m/%Y
+"#;
+
+pub const CONFIG_LIST: &str = r#"
+config list
+  List current configuration settings
 "#;
 
 pub const HELP: &str = r#"

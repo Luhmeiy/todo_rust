@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::list::{ListError, TaskList};
 use colored::*;
 use serde::{Deserialize, Serialize};
@@ -100,7 +101,7 @@ impl ListManager {
         Ok((old_title, new_title))
     }
 
-    pub fn get_due_tasks(&mut self) -> Result<(), ManagerError> {
+    pub fn get_due_tasks(&mut self, config: &Config) -> Result<(), ManagerError> {
         if self.lists.is_empty() {
             return Err(ManagerError::Empty);
         }
@@ -118,7 +119,7 @@ impl ListManager {
         dues.sort_by(|a, b| a.get_due_date().unwrap().cmp(&b.get_due_date().unwrap()));
 
         for due in dues {
-            due.display_due()
+            due.display_due(config)
         }
 
         Ok(())

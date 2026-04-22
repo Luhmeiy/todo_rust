@@ -2,6 +2,8 @@ use chrono::{Days, NaiveDate};
 use colored::*;
 use serde::{Deserialize, Serialize};
 
+use crate::config::Config;
+
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Priority {
     Low,
@@ -65,7 +67,7 @@ impl Task {
         }
     }
 
-    pub fn display_due(&self) {
+    pub fn display_due(&self, config: &Config) {
         let priority = match self.priority {
             Some(priority) => format!("({priority:?})"),
             None => String::new(),
@@ -81,7 +83,7 @@ impl Task {
         } else if due_date == today + Days::new(1) {
             "TOMORROW".to_string().yellow()
         } else {
-            due_date.format("%d-%m-%Y").to_string().cyan()
+            due_date.format(config.get_date_format()).to_string().cyan()
         };
 
         println!("• {} {} {}", day, self.description, priority.cyan());

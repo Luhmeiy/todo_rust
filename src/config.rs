@@ -8,6 +8,7 @@ pub enum ConfigError {
     JsonError(serde_json::Error),
     SaveFailed,
     LoadFailed,
+    InvalidDateFormat,
 }
 
 pub enum AliasError {
@@ -36,6 +37,7 @@ impl std::fmt::Display for ConfigError {
             ConfigError::JsonError(e) => write!(f, "JSON error: {e}"),
             ConfigError::SaveFailed => write!(f, "Failed to save config"),
             ConfigError::LoadFailed => write!(f, "Failed to load config"),
+            ConfigError::InvalidDateFormat => write!(f, "Invalid date format"),
         }
     }
 }
@@ -44,6 +46,12 @@ impl std::fmt::Display for ConfigError {
 pub struct Config {
     path: PathBuf,
     aliases: HashMap<String, PathBuf>,
+    #[serde(default = "default_date_format")]
+    date_format: String,
+}
+
+fn default_date_format() -> String {
+    "%d-%m-%Y".to_string()
 }
 
 fn validate_alias_name(name: &str) -> Result<(), AliasError> {
@@ -58,6 +66,7 @@ impl Config {
         Config {
             path: PathBuf::from("./todo_data.json"),
             aliases: HashMap::from([("@todo".to_string(), PathBuf::from("./todo_data.json"))]),
+            date_format: String::from("%d-%m-%Y"),
         }
     }
 
@@ -184,5 +193,21 @@ impl Config {
         }
 
         Ok(config)
+    }
+
+    pub fn get_date_format(&self) -> &str {
+        &self.date_format
+    }
+
+    pub fn set_date_format(&mut self, date_format: String) -> Result<String, ConfigError> {
+        chrono::NaiveDate::parse_from_str("01-01-25", &date_format)
+            .map_err(|_| ConfigError::InvalidDateFormat)?;
+
+        self.date_format = date_format;
+        Ok(self.date_format.clone())
+    }
+
+    pub fn list_settings(&self) {
+        println!("Date format: {}", self.date_format);
     }
 }

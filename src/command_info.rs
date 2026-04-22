@@ -155,6 +155,22 @@ pub const COMMANDS: &[CommandInfo] = &[
         help: help::ALIAS,
     },
     CommandInfo {
+        name: "config",
+        subcommands: &[
+            SubcommandInfo {
+                name: "date-format",
+                help: help::CONFIG_DATE_FORMAT,
+            },
+            SubcommandInfo {
+                name: "list",
+                help: help::CONFIG_LIST,
+            },
+        ],
+        flags: &[],
+        requires_list: false,
+        help: help::CONFIG,
+    },
+    CommandInfo {
         name: "help",
         subcommands: &[],
         flags: &[],
