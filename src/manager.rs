@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::history::History;
-use crate::list::{ListError, TaskList};
+use crate::list::{ListError, ListFilter, TaskList};
 use colored::*;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -14,9 +14,10 @@ pub enum ListId {
 
 pub enum ManagerError {
     Empty,
-    EmptyLists,
+    NoTasks,
     NotFound,
     MultipleMatches(Vec<(usize, String)>),
+    NoMatches,
     IoError(std::io::Error),
     JsonError(serde_json::Error),
     InvalidFileFormat,
@@ -37,7 +38,7 @@ impl std::fmt::Display for ManagerError {
                 f,
                 "No lists found. Create a new list with \"mklist name of your list\""
             ),
-            ManagerError::EmptyLists => write!(f, "No tasks found."),
+            ManagerError::NoTasks => write!(f, "No tasks found."),
             ManagerError::NotFound => write!(f, "List not found."),
             ManagerError::MultipleMatches(indices) => {
                 writeln!(f, "Multiple matches. Please use the list number.")?;
@@ -48,6 +49,7 @@ impl std::fmt::Display for ManagerError {
                 }
                 Ok(())
             }
+            ManagerError::NoMatches => write!(f, "No tasks match the filter."),
             ManagerError::IoError(e) => write!(f, "IO error: {e}"),
             ManagerError::JsonError(e) => write!(f, "JSON error: {e}"),
             ManagerError::InvalidFileFormat => {
@@ -119,7 +121,7 @@ impl ListManager {
         }
 
         if dues.is_empty() {
-            return Err(ManagerError::EmptyLists);
+            return Err(ManagerError::NoTasks);
         }
 
         dues.sort_by(|a, b| a.get_due_date().unwrap().cmp(&b.get_due_date().unwrap()));
@@ -154,29 +156,45 @@ impl ListManager {
         Ok(())
     }
 
-    pub fn list_tasks(&self) -> Result<(), ManagerError> {
+    pub fn list_with_filter(&self, filter: &ListFilter) -> Result<(), ManagerError> {
+        let mut has_matches = false;
+
         if self.lists.is_empty() {
-            return Err(ManagerError::Empty);
+            return Err(ManagerError::NoTasks);
         }
 
-        let mut has_tasks = false;
-        for list in self.lists.iter() {
-            if list.has_tasks() {
-                has_tasks = true;
-                list.list_without_verify();
+        for (index, list) in self.lists.iter().enumerate() {
+            if !list.has_tasks() {
+                continue;
+            }
+
+            let filtered = list.get_filtered_tasks(&filter);
+
+            if !filtered.is_empty() {
+                has_matches = true;
+
+                if index != 0 {
+                    println!()
+                }
+
+                println!("List: {}", list.get_title().cyan());
+
+                for task in filtered {
+                    task.display();
+                }
             }
         }
 
-        if !has_tasks {
-            return Err(ManagerError::EmptyLists);
+        if !has_matches {
+            return Err(ManagerError::NoMatches);
         }
 
         Ok(())
     }
 
-    pub fn list_from(&mut self, query: ListId) -> Result<(), ManagerError> {
+    pub fn list_from(&self, query: ListId, filter: &ListFilter) -> Result<(), ManagerError> {
         let id = self.resolve_index(query)?;
-        self.lists[id].list()?;
+        self.lists[id].list_with_filter(&filter)?;
         Ok(())
     }
 

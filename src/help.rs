@@ -8,8 +8,9 @@ List Management:
 
 Current List Tasks:
   add <task>             Add a task
-  list                   Display all tasks
-    --all                Display all tasks from all lists
+  list [flags]           Display tasks (flags: --checked, --unchecked, --priority, --due)
+    --all                Display all tasks from all lists (combine with flags)
+    <id|title>           Display tasks from a specific list by ID or name
   dues                   Display tasks with due dates
   update <id> <desc>     Update a task by ID
   due <id> date          View or add due date
@@ -90,13 +91,20 @@ add <task description> [--priority <level> | -p <level>] [--due <date> | -d <dat
 "#;
 
 pub const LIST: &str = r#"
-list [--all | <id|title>]
+list [--all | <id|title>] [flags]
   Display tasks in a list with their completion status
-  • --all                Display tasks from all lists
   • <id|title>           Display tasks from a specific list by ID or name
+  • --all, -a            Display tasks from all lists (can combine with flags)
+  • --checked, -c        Only show checked tasks (AND logic with other flags)
+  • --unchecked, -u      Only show unchecked tasks (AND logic with other flags)
+  • --priority, -p       Only show tasks with priority (AND logic with other flags)
+  • --due, -d            Only show tasks with due date (AND logic with other flags)
   Examples:
-    list                 # Display current list tasks
-    list --all           # Display tasks from all lists
+    list                 # Display all tasks in current list
+    list --checked       # Display only checked tasks in current list
+    list --unchecked     # Display only unchecked tasks in current list
+    list -u -p           # Unchecked and priority tasks
+    list --all --due     # Tasks with due dates across all lists
     list 2               # Display tasks from list ID 2
     list work            # Display tasks from list named "work"
 "#;

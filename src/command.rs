@@ -7,10 +7,17 @@ use crate::{
     config::Config,
     error::AppError,
     help,
-    list::TaskId,
+    list::{ListFilter, TaskId},
     manager::{ListId, ListManager},
     task::Priority,
 };
+
+#[derive(PartialEq)]
+pub enum ListScope {
+    Current,
+    All,
+    From(ListId),
+}
 
 pub enum Command {
     MakeList(String),
@@ -20,9 +27,7 @@ pub enum Command {
     Rename(usize, String),
     RenameCurrent(String),
     Add(String, Option<NaiveDate>, Option<Priority>),
-    List,
-    ListAll,
-    ListFrom(ListId),
+    ListWithFilter(ListScope, ListFilter),
     Dues,
     Update(TaskId, String),
     DueView(TaskId),
@@ -166,13 +171,42 @@ impl Command {
                 let (task, due_date, priority) = parse_add_flags(rest, config)?;
                 Ok(Command::Add(task, due_date, priority))
             }
-            ["list"] => Ok(Command::List),
-            ["list", "--all"] => Ok(Command::ListAll),
-            ["list", query @ ..] => match query[0].parse::<usize>() {
-                Ok(id) if id > 0 => Ok(Command::ListFrom(ListId::Number(id - 1))),
-                Ok(_) => Err("ID must be a positive integer.".to_string()),
-                Err(_) => Ok(Command::ListFrom(ListId::String(query.join(" ")))),
-            },
+            ["list", rest @ ..] => {
+                let mut filter = ListFilter::default();
+                let mut scope = ListScope::Current;
+                let mut query_parts = Vec::new();
+
+                for &arg in rest {
+                    match arg {
+                        "--all" | "-a" => scope = ListScope::All,
+                        "--checked" | "-c" => filter.checked = true,
+                        "--unchecked" | "-u" => filter.unchecked = true,
+                        "--priority" | "-p" => filter.priority = true,
+                        "--due" | "-d" => filter.due = true,
+                        _ => query_parts.push(arg),
+                    }
+                }
+
+                if filter.checked && filter.unchecked {
+                    return Err("Cannot use both --checked and --unchecked".to_string());
+                }
+
+                if !query_parts.is_empty() {
+                    if scope == ListScope::All {
+                        return Err("--all cannot be combined with a list query.".to_string());
+                    }
+
+                    let query = query_parts.join(" ");
+
+                    scope = match query.parse::<usize>() {
+                        Ok(id) if id > 0 => ListScope::From(ListId::Number(id - 1)),
+                        Ok(_) => return Err("ID must be a positive integer.".to_string()),
+                        Err(_) => ListScope::From(ListId::String(query)),
+                    };
+                }
+
+                Ok(Command::ListWithFilter(scope, filter))
+            }
             ["dues"] => Ok(Command::Dues),
             ["dues", _rest @ ..] => Err("dues takes no parameters.".to_string()),
             ["update"] => Err("update requires an ID and a new task description.".to_string()),
@@ -337,12 +371,14 @@ impl Command {
                 let task = tasks.add(task, due_date, priority)?;
                 println!("Added task {}", task.get_description().cyan())
             }
-            Command::List => {
-                let tasks = list_manager.get_current_list()?;
-                tasks.list()?
-            }
-            Command::ListAll => list_manager.list_tasks()?,
-            Command::ListFrom(query) => list_manager.list_from(query)?,
+            Command::ListWithFilter(scope, filter) => match scope {
+                ListScope::Current => {
+                    let tasks = list_manager.get_current_list()?;
+                    tasks.list_with_filter(&filter)?
+                }
+                ListScope::All => list_manager.list_with_filter(&filter)?,
+                ListScope::From(query) => list_manager.list_from(query, &filter)?,
+            },
             Command::Dues => list_manager.get_due_tasks(config)?,
             Command::Update(id, task) => {
                 let tasks = list_manager.get_current_list()?;

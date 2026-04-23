@@ -13,6 +13,7 @@ pub enum ListError {
     Empty,
     NotFound,
     MultipleMatches(Vec<(usize, String)>),
+    NoMatches,
 }
 
 impl std::fmt::Display for ListError {
@@ -29,7 +30,29 @@ impl std::fmt::Display for ListError {
                 }
                 Ok(())
             }
+            ListError::NoMatches => write!(f, "No tasks match the filter."),
         }
+    }
+}
+
+#[derive(Default, PartialEq)]
+pub struct ListFilter {
+    pub checked: bool,
+    pub unchecked: bool,
+    pub priority: bool,
+    pub due: bool,
+}
+
+impl ListFilter {
+    pub fn matches(&self, task: &Task) -> bool {
+        (!self.checked || task.is_checked())
+            && (!self.unchecked || !task.is_checked())
+            && (!self.priority || task.get_priority().is_some())
+            && (!self.due || task.get_due_date().is_some())
+    }
+
+    pub fn has_filter(&self) -> bool {
+        self.checked || self.unchecked || self.priority || self.due
     }
 }
 
@@ -75,22 +98,40 @@ impl TaskList {
         Ok(self.tasks.last().unwrap())
     }
 
-    pub fn list(&mut self) -> Result<(), ListError> {
-        self.is_not_empty(|tasks| {
-            for task in tasks.iter() {
-                task.display();
-            }
-        })
-    }
-
     pub fn has_tasks(&self) -> bool {
         !self.tasks.is_empty()
     }
 
-    pub fn list_without_verify(&self) {
-        for task in self.tasks.iter() {
+    pub fn get_filtered_tasks(&self, filter: &ListFilter) -> Vec<&Task> {
+        self.tasks
+            .iter()
+            .filter(|task| filter.matches(task))
+            .collect()
+    }
+
+    pub fn list_with_filter(&self, filter: &ListFilter) -> Result<(), ListError> {
+        if self.tasks.is_empty() {
+            return Err(ListError::Empty);
+        }
+
+        if !filter.has_filter() {
+            for task in self.tasks.iter() {
+                task.display();
+            }
+
+            return Ok(());
+        }
+
+        let filtered = self.get_filtered_tasks(filter);
+        if filtered.is_empty() {
+            return Err(ListError::NoMatches);
+        }
+
+        for task in filtered {
             task.display();
         }
+
+        Ok(())
     }
 
     pub fn get_due_tasks(&self) -> Vec<&Task> {
