@@ -103,6 +103,13 @@ pub const COMMANDS: &[CommandInfo] = &[
         help: help::PRIORITY,
     },
     CommandInfo {
+        name: "info",
+        subcommands: &[],
+        flags: &[],
+        requires_list: true,
+        help: help::INFO,
+    },
+    CommandInfo {
         name: "check",
         subcommands: &[],
         flags: &["--all"],

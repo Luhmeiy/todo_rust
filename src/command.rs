@@ -30,6 +30,7 @@ pub enum Command {
     ListWithFilter(ListScope, ListFilter),
     Dues,
     Update(TaskId, String),
+    Info(TaskId),
     DueView(TaskId),
     DueRemove(TaskId),
     DueAdd(TaskId, NaiveDate),
@@ -220,6 +221,12 @@ impl Command {
                     let task = rest.join(" ");
                     Ok(Command::Update(TaskId::Number(id - 1), task))
                 }
+                Ok(_) => Err("ID must be a positive integer.".to_string()),
+                Err(_) => Err("Invalid ID.".to_string()),
+            },
+            ["info"] => Err("info requires an ID.".to_string()),
+            ["info", query] => match query.parse::<usize>() {
+                Ok(id) if id > 0 => Ok(Command::Info(TaskId::Number(id - 1))),
                 Ok(_) => Err("ID must be a positive integer.".to_string()),
                 Err(_) => Err("Invalid ID.".to_string()),
             },
@@ -438,6 +445,10 @@ impl Command {
                 let tasks = list_manager.get_current_list()?;
                 let description = tasks.add_priority(id, priority)?;
                 println!("Set priority for task {}", description.cyan())
+            }
+            Command::Info(id) => {
+                let tasks = list_manager.get_current_list()?;
+                tasks.display_task_info(id, config)?
             }
             Command::CheckAll => {
                 let tasks = list_manager.get_current_list()?;

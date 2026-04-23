@@ -51,12 +51,35 @@ impl Task {
         self.checked
     }
 
-    pub fn display(&self) {
-        let check = if self.checked { "✓" } else { " " };
-        let priority = match self.priority {
+    fn unwrap_due_date(&self, config: &Config) -> ColoredString {
+        let due_date = match self.due_date {
+            Some(due_date) => due_date,
+            None => return "No due date".into(),
+        };
+
+        let today = NaiveDate::from(chrono::Local::now().date_naive());
+
+        if due_date < today {
+            "OVERDUE".to_string().red()
+        } else if due_date == today {
+            "TODAY".to_string().yellow()
+        } else if due_date == today + Days::new(1) {
+            "TOMORROW".to_string().yellow()
+        } else {
+            due_date.format(config.get_date_format()).to_string().cyan()
+        }
+    }
+
+    fn unwrap_priority(&self) -> String {
+        match self.priority {
             Some(priority) => format!("({priority:?})"),
             None => String::new(),
-        };
+        }
+    }
+
+    pub fn display(&self) {
+        let check = if self.checked { "✓" } else { " " };
+        let priority = self.unwrap_priority();
 
         let display = format!("• [{}] {} {}", check, self.description, priority.cyan());
 
@@ -68,25 +91,9 @@ impl Task {
     }
 
     pub fn display_due(&self, config: &Config) {
-        let priority = match self.priority {
-            Some(priority) => format!("({priority:?})"),
-            None => String::new(),
-        };
-
-        let due_date = self.due_date.unwrap();
-        let today = NaiveDate::from(chrono::Local::now().date_naive());
-
-        let day = if due_date < today {
-            "OVERDUE".to_string().red()
-        } else if due_date == today {
-            "TODAY".to_string().yellow()
-        } else if due_date == today + Days::new(1) {
-            "TOMORROW".to_string().yellow()
-        } else {
-            due_date.format(config.get_date_format()).to_string().cyan()
-        };
-
-        println!("• {} {} {}", day, self.description, priority.cyan());
+        let due_date = self.unwrap_due_date(config);
+        let priority = self.unwrap_priority();
+        println!("• {} {} {}", due_date, self.description, priority.cyan());
     }
 
     pub fn remove_due_date(&mut self) {
@@ -116,5 +123,27 @@ impl Task {
 
     pub fn uncheck(&mut self) {
         self.checked = false
+    }
+
+    pub fn display_info(&self, config: &Config) {
+        let check = if self.checked { "✓" } else { " " };
+        let display = format!("[{}] {}", check, self.description);
+
+        if self.checked {
+            println!("{}", display.green());
+        } else {
+            println!("{}", display);
+        }
+
+        let due_date = self.unwrap_due_date(config);
+        println!("Due date: {}", due_date);
+
+        println!(
+            "Priority: {}",
+            match self.priority {
+                Some(p) => format!("({:?})", p).cyan(),
+                None => "No priority".into(),
+            }
+        )
     }
 }

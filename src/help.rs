@@ -17,6 +17,7 @@ Current List Tasks:
     --remove             Remove due date
   priority <id> level    View or add priority
     --remove             Remove priority
+  info <id>              Display all task information
   check <id|desc>        Mark done
     --all                Mark all tasks as done
   uncheck <id|desc>      Mark not done
@@ -140,6 +141,12 @@ priority <id> [<level> | --remove]
     priority 5           # View priority for task 5
     priority 5 high      # Set priority to high for task 5
     priority 5 --remove  # Remove priority from task 5
+"#;
+
+pub const INFO: &str = r#"
+info <id>
+  Display all information for a task by ID
+  Example: info 5
 "#;
 
 pub const CHECK: &str = r#"

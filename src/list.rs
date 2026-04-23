@@ -1,4 +1,7 @@
-use crate::task::{Priority, Task};
+use crate::{
+    config::Config,
+    task::{Priority, Task},
+};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
@@ -210,6 +213,12 @@ impl TaskList {
         let priority = task.get_priority();
 
         Ok((description, priority))
+    }
+
+    pub fn display_task_info(&self, query: TaskId, config: &Config) -> Result<(), ListError> {
+        let id = self.resolve_index(query)?;
+        self.tasks[id].display_info(config);
+        Ok(())
     }
 
     pub fn remove_priority(&mut self, query: TaskId) -> Result<&str, ListError> {
